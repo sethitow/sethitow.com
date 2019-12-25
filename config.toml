@@ -24,6 +24,10 @@ theme = "hermit"
     name = "stackoverflow"
     url = "https://stackoverflow.com/users/1927860/seth"
 
+  [[params.social]]
+    name = "youtube"
+    url = "https://www.youtube.com/channel/UCrXp6VRcsC0lYWCfRK4Uc1w"
+
 [menu]
 
   [[menu.main]]
