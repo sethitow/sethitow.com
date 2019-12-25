@@ -1,0 +1,42 @@
+baseURL = "https://sethitow.com/"
+languageCode = "en-us"
+title = "Seth Itow"
+theme = "hermit"
+
+[author]
+  name = "Seth Itow"
+
+[params]
+  dateform        = "Jan 2, 2006"
+  dateformShort   = "Jan 2"
+  dateformNum     = "2006-01-02"
+  dateformNumTime = "2006-01-02 15:04 -0700"
+
+  [[params.social]]
+    name = "github"
+    url = "https://github.com/sethitow"
+
+  [[params.social]]
+    name = "linkedin"
+    url = "https://www.linkedin.com/in/sethitow/"
+
+  [[params.social]]
+    name = "stackoverflow"
+    url = "https://stackoverflow.com/users/1927860/seth"
+
+[menu]
+
+  [[menu.main]]
+    name = "Tech Blog"
+    url = "posts/tech/"
+    weight = 10
+
+  [[menu.main]]
+    name = "Food Blog"
+    url = "posts/food/"
+    weight = 20
+
+  [[menu.main]]
+    name = "About / Contact"
+    url = "about-contact/"
+    weight = 30
