@@ -28,6 +28,10 @@ theme = "hermit"
     name = "youtube"
     url = "https://www.youtube.com/channel/UCrXp6VRcsC0lYWCfRK4Uc1w"
 
+  [[params.social]]
+    name = "resume"
+    url = "/resume"
+
 [menu]
 
   [[menu.main]]
