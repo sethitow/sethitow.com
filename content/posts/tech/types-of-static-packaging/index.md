@@ -1,7 +1,6 @@
 ---
 title: "Types of Anti-Static Packaging"
 date: 2020-01-16T21:22:05-08:00
-draft: true
 toc: false
 images:
 tags: 
