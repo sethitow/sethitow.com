@@ -4,7 +4,9 @@ date: 2020-01-16T21:22:05-08:00
 toc: false
 images:
 tags: 
-  - tech
+  - untagged
+categories:
+  - Tech
 ---
 
 <table>

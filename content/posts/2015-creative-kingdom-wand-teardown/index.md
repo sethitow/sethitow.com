@@ -3,9 +3,10 @@ title: "Creative Kingdom Wand Teardown"
 date: 2015-06-07T16:02:00-08:00
 draft: false
 toc: false
-images:
 tags: 
   - teardown
+categories:
+  - Tech
 ---
 
 Creative Kingdom makes Live Action Roll Play games for children. All of their games use an IR want to control game elements scattered around a park. Their flagship product, Magiquest, can be found in amusement parks across the country. They also do custom work, such as DinoQuest, at the Discovery Science Center in Santa Ana. This particular wand was from DinoQuest.

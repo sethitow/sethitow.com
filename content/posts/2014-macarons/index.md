@@ -4,7 +4,9 @@ date: 2014-04-17T16:32:00-08:00
 toc: false
 images:
 tags: 
-  - untagged
+  - baking
+categories:
+  - Food
 ---
 
 I'll start with a brief etymology. <em>Macaroon</em> and <em>Macaron</em> both come from the same Italian word <i>maccherone</i>. In modern vernacular, a macaroon is a coconut-based, dense, cake-y blob. A macaron is a meringue-based patty containing some sort of nut flour.

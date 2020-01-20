@@ -38,14 +38,19 @@ theme = "hermit"
 [menu]
 
   [[menu.main]]
-    name = "Tech Blog"
-    url = "posts/tech/"
+    name = "Posts"
+    url = "posts/"
     weight = 10
 
-  [[menu.main]]
-    name = "Food Blog"
-    url = "posts/food/"
-    weight = 20
+  # [[menu.main]]
+  #   name = "Tech Blog"
+  #   url = "posts/tech/"
+  #   weight = 10
+
+  # [[menu.main]]
+  #   name = "Food Blog"
+  #   url = "posts/food/"
+  #   weight = 20
 
   [[menu.main]]
     name = "About / Contact"

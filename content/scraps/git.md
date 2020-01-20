@@ -1,5 +1,5 @@
 ---
-title: "Git"
+title: "Git's Commad Line Interface"
 date: 2019-12-24T23:02:36-08:00
 draft: true
 ---
