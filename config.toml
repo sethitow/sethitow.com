@@ -42,6 +42,11 @@ theme = "hermit"
     url = "posts/"
     weight = 10
 
+  [[menu.main]]
+    name = "Photography"
+    url = "photo/"
+    weight = 15
+
   # [[menu.main]]
   #   name = "Tech Blog"
   #   url = "posts/tech/"
