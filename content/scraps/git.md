@@ -22,3 +22,9 @@ Git has a reputation for having an obtuse commnad line interface, however it rec
 - Branches
 	- git branch -D <branch name>
 	- git push <remote name>  :<branch name>
+	
+## Ways to list Things
+- git remote
+- git log
+- git tag
+- git branch
