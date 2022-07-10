@@ -1,4 +1,3 @@
-
 :root {
   --background-body: #ffffff;
   --background: #efefef;
@@ -29,7 +28,7 @@ body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   line-height: 1.2;
 
-  max-width: 800px;
+  max-width: 1000px;
   margin: 20px auto;
   padding: 0 10px;
 
@@ -77,21 +76,22 @@ th {
 }
 
 q:before {
-   content: none;
+  content: none;
 }
 
 q:after {
-   content: none;
+  content: none;
 }
 
-blockquote , q{
+blockquote,
+q {
   border-left: 4px solid var(--focus);
   margin: 1.5em 0em;
   padding: 0.5em 1em;
   font-style: italic;
 }
 
-blockquote > footer {
+blockquote>footer {
   font-style: normal;
   border: 0;
 }
@@ -120,15 +120,17 @@ a:hover {
   text-decoration: underline;
 }
 
-code, samp, time {
-  background:  var(--background);
+code,
+samp,
+time {
+  background: var(--background);
   color: var(--code);
   padding: 2.5px 5px;
   border-radius: 6px;
   font-size: 1em;
 }
 
-pre > code {
+pre>code {
   padding: 10px;
   display: block;
   overflow-x: auto;
@@ -224,7 +226,7 @@ details[open] {
   padding: 10px;
 }
 
-details > :last-child {
+details> :last-child {
   margin-bottom: 0;
 }
 
@@ -239,7 +241,7 @@ summary {
   margin: -10px -10px 0;
 }
 
-details > :not(summary) {
+details> :not(summary) {
   margin-top: 0;
 }
 
@@ -253,4 +255,3 @@ footer {
   font-size: 0.8em;
   color: var(--text-muted);
 }
-
