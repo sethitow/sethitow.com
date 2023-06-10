@@ -8,7 +8,7 @@ tags:
   - untagged
 ---
 
-In Eminem's new album _Music to Be Murdered By_, a phrase returns that has made an appearence in several of Eminem's works throughout his career. 
+In Eminem's new album _Music to Be Murdered By_, a phrase returns that has made an appearance in several of Eminem's works throughout his career. 
 
 
 ## 2000 -- [Eminem -- The Real Slim Shady](https://genius.com/241200)
@@ -28,4 +28,4 @@ In Eminem's new album _Music to Be Murdered By_, a phrase returns that has made 
 > But I think I might be buildin' up a tolerance to you
 
 
-So far, I've found four uses of this phrase (which is fewer than I seem to recall). The phrase is always used in the same context, refering to himself.
+So far, I've found four uses of this phrase. The phrase is always used in the same context, referring to himself.
