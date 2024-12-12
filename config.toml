@@ -1,37 +1,42 @@
 baseURL = "https://www.sethitow.com/"
 languageCode = "en-us"
 title = "Seth Itow"
-theme = "hermit"
-
-[author]
-  name = "Seth Itow"
+theme = "hermit-v2"
+footerHideThemeName = true
 
 [markup.goldmark.renderer]
   unsafe= true
 
 [params]
+  footerHideThemeName = true
+
   dateform        = "Jan 2, 2006"
   dateformShort   = "Jan 2"
   dateformNum     = "2006-01-02"
   dateformNumTime = "2006-01-02 15:04 -0700"
 
-  [[params.social]]
+  shareSocial = true
+
+  [params.author]
+    name = "Seth Itow"
+
+  [[params.socialLinks]]
     name = "github"
     url = "https://github.com/sethitow"
 
-  [[params.social]]
+  [[params.socialLinks]]
     name = "linkedin"
     url = "https://www.linkedin.com/in/sethitow/"
 
-  [[params.social]]
+  [[params.socialLinks]]
     name = "stackoverflow"
     url = "https://stackoverflow.com/users/1927860/seth"
 
-  [[params.social]]
+  [[params.socialLinks]]
     name = "youtube"
     url = "https://www.youtube.com/user/Thedingwing"
 
-  [[params.social]]
+  [[params.socialLinks]]
     name = "resume"
     url = "/resume"
 
