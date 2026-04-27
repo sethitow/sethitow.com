@@ -1,0 +1,43 @@
+{{- $src := .Get "src" -}}
+{{- $alt := .Get "alt" | default "" -}}
+{{- $style := .Get "style" | default "" -}}
+{{- $class := .Get "class" | default "" -}}
+{{- $loading := .Get "loading" | default "lazy" -}}
+{{- $link := .Get "link" | default "" -}}
+{{- $maxWidth := 2000 -}}
+{{- if $src -}}
+{{- $i := .Page.Resources.GetMatch $src -}}
+{{- if not $i -}}{{- $i = resources.Get $src -}}{{- end -}}
+{{- with $i -}}
+{{- $origPermalink := .RelPermalink -}}
+{{- if eq .MediaType.MainType "image" -}}
+{{- $width := .Width -}}
+{{- $height := .Height -}}
+{{- if gt $width $maxWidth -}}
+{{- $height = (int (math.Round (mul (div (float $maxWidth) (float $width)) (float $height)))) -}}
+{{- $width = $maxWidth -}}
+{{- end -}}
+{{- $jpg := "" -}}
+{{- $webp := "" -}}
+{{- if eq .MediaType "image/webp" -}}
+{{- $jpg = .Resize (printf "%vx%v jpg" $width $height) -}}
+{{- $webp = .Resize (printf "%vx%v webp" $width $height) -}}
+{{- else if eq .MediaType "image/jpeg" -}}
+{{- $webp = .Resize (printf "%vx%v webp" $width $height) -}}
+{{- $jpg = .Resize (printf "%vx%v jpg" $width $height) -}}
+{{- else -}}
+{{- $jpg = .Resize (printf "%vx%v jpg" $width $height) -}}
+{{- $webp = .Resize (printf "%vx%v webp" $width $height) -}}
+{{- end -}}
+{{- if eq $link "true" -}}<a href="{{ $origPermalink }}">{{- end -}}
+<picture><source srcset="{{ $webp.RelPermalink }}" type="image/webp"><source srcset="{{ $jpg.RelPermalink }}" type="image/jpeg"><img src="{{ $webp.RelPermalink }}"{{ with $alt }} alt="{{ . }}"{{ end }}{{ with $class }} class="{{ . }}"{{ end }}{{ with $style }} style="{{ . }}"{{ end }} width="{{ $jpg.Width }}" height="{{ $jpg.Height }}" loading="{{ $loading }}" /></picture>
+{{- if eq $link "true" -}}</a>{{- end -}}
+{{- else -}}
+<img src="{{ .RelPermalink }}"{{ with $alt }} alt="{{ . }}"{{ end }}{{ with $class }} class="{{ . }}"{{ end }}{{ with $style }} style="{{ . }}"{{ end }} loading="{{ $loading }}" />
+{{- end -}}
+{{- else -}}
+{{- errorf "processed-img: resource %q not found. See %s" $src .Position -}}
+{{- end -}}
+{{- else -}}
+{{- errorf "processed-img: src parameter is required. See %s" .Position -}}
+{{- end -}}
