@@ -1,0 +1,8 @@
+{{- $filename := .Get 0 -}}
+{{- $path := path.Join .Page.File.Dir $filename -}}
+{{- $content := os.ReadFile $path -}}
+{{- if $content -}}
+{{- $content | safeHTML -}}
+{{- else -}}
+{{- errorf "include shortcode: file not found" -}}
+{{- end -}}
