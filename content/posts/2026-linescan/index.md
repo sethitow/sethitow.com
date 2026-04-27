@@ -13,13 +13,13 @@ categories:
 <figure class="image">
   <div style="display: flex; flex-direction: column; gap: 4px;">
     <div style="width: 100%; aspect-ratio: 15333 / 2000; overflow: hidden;">
-      <img src="caltrain_lightroom_edit.jpg" style="width: 300%; height: 100%; object-fit: cover; object-position: left;">
+      {{< processed-img src="caltrain_lightroom_edit.jpg" style="width: 300%; height: 100%; object-fit: cover; object-position: left;" alt="Caltrain left section" link="true" >}}
     </div>
     <div style="width: 100%; aspect-ratio: 15333 / 2000; overflow: hidden;">
-      <img src="caltrain_lightroom_edit.jpg" style="width: 300%; height: 100%; object-fit: cover; object-position: center;">
+      {{< processed-img src="caltrain_lightroom_edit.jpg" style="width: 300%; height: 100%; object-fit: cover; object-position: center;" alt="Caltrain center section" link="true" >}}
     </div>
     <div style="width: 100%; aspect-ratio: 15333 / 2000; overflow: hidden;">
-      <img src="caltrain_lightroom_edit.jpg" style="width: 300%; height: 100%; object-fit: cover; object-position: right;">
+      {{< processed-img src="caltrain_lightroom_edit.jpg" style="width: 300%; height: 100%; object-fit: cover; object-position: right;" alt="Caltrain right section" link="true" >}}
     </div>
   </div>
   <figcaption>Caltrain</figcaption>
@@ -73,11 +73,11 @@ For interconnection:
 
 <div style="display: flex; gap: 1em; justify-content: center; flex-wrap: wrap;">
   <figure class="image" style="flex: 1.588; min-width: 0;">
-    <img src="camera-side.jpg" style="width: 100%; height: auto;">
+    {{< processed-img src="camera-side.jpg" style="width: 100%; height: auto;" alt="The completed camera with a Nikon 50mm lens" >}}
     <figcaption>The completed camera with a Nikon 50mm lens.</figcaption>
   </figure>
   <figure class="image" style="flex: 1.689; min-width: 0;">
-    <img src="camera-side-no-cover.jpg" style="width: 100%; height: auto;">
+    {{< processed-img src="camera-side-no-cover.jpg" style="width: 100%; height: auto;" alt="The camera with the front cover removed" >}}
     <figcaption>The camera with the front cover removed.</figcaption>
   </figure>
 </div>
@@ -100,10 +100,7 @@ After much searching and a few phone calls, I found a combination of lens adapte
 
 For operating the camera, I wanted a lightweight touchscreen GUI to allow as much of the Raspberry Pi's resources to be used for actually capturing the image. Qt 5 with QtQuick components was chosen because I was already familiar with Qt. Qt 5 was used because it's available on Raspbian 11 (Bullseye). If I had to do this again, I'd try Rust and [Slint](https://slint.dev). I would have liked to use a custom Linux build with Buildroot, but the Seeed ReTerminal has a lot of peripheral drivers that are pre-installed in Seeed's modified Raspbian distribution. If I had rolled my own, I would have had to get those working on my own.
 
-<figure class="image">
-  <img src="camera-back.jpg">
-  <figcaption>The setup interface with information to help set the exposure time, gain (ISO), white balance, and focus.</figcaption>
-</figure>
+{{< figure src="camera-back.jpg" caption="The setup interface with information to help set the exposure time, gain (ISO), white balance, and focus." class="image" style="max-width: 600px;" >}}
 
 The camera uses the GigE Vision protocol, which is a UDP-based protocol for transferring camera data. On top of GigE Vision, the camera follows the GenICam API standard [^3]. There are open source libraries that implement these protocols, but it was easier to get started with the vendors proprietary C SDK, which they provide for Linux on arm64.
 
@@ -118,7 +115,7 @@ After the image is captured, it is stored as "raw" image data, which isn't direc
 Digital cameras capture color images by putting a "color filter array" in front of the sensor.
 
 <figure class="image">
-  <img style="max-width: 400px" src="bayer-pattern.png">
+  {{< processed-img src="bayer-pattern.png" style="max-width: 400px" alt="The Bayer pattern over an image sensor" >}}
   <figcaption>The Bayer pattern over an image sensor.</figcaption>
 </figure>
 
@@ -127,7 +124,7 @@ The color filter array limits each pixel on the sensor to only detect one color,
 The vendor SDK provides a function to demosaic the image data, however it provides limited options and ultimately results in poor control of the final output. To allow more ergonomic editing and color correction I implemented a converter to save the camera raw files as Adobe DNG files that can be opened by Adobe Lightroom, Affinity Photo, and other photo editing software. The DNG file format is public and well documented, however Lightroom is very finicky in what it will accept. There are many "optional" fields in the file format that Lightroom seems to require, and it does not give clear error messages about what it doesn't like about a given file.
 
 <figure class="image">
-  <img style="max-width: 600px" src="lightroom-error.png">
+  {{< processed-img src="lightroom-error.png" style="max-width: 600px" alt="A supremely unhelpful error from Lightroom" >}}
   <figcaption>A supremely unhelpful error from Lightroom after trying to import a valid DNG file.</figcaption>
 </figure>
 
@@ -137,15 +134,15 @@ Getting the file to open is only part of the battle, however. If the raw sensor 
 
 <div style="display: flex; gap: 1em; justify-content: center; flex-wrap: wrap;">
   <figure class="image" style="flex: 1; min-width: 0;">
-    <img src="caltrain_vendor_sdk_crop.jpg">
+    {{< processed-img src="caltrain_vendor_sdk_crop.jpg" alt="The image as developed by the vendor SDK" link="true" >}}
     <figcaption>The image as developed by the vendor's SDK. Note that the train accents are orange, instead of red.</figcaption>
   </figure>
   <figure class="image" style="flex: 1; min-width: 0;">
-    <img src="caltrain_lightroom_noedit_crop.jpg">
+    {{< processed-img src="caltrain_lightroom_noedit_crop.jpg" alt="The image developed in Lightroom with no manual adjustments" link="true" >}}
     <figcaption>The image developed in Lightroom using the built-in color correction parameters, with no manual adjustments. It's overexposed.</figcaption>
   </figure>
   <figure class="image" style="flex: 1; min-width: 0;">
-    <img src="caltrain_lightroom_edit_crop.jpg">
+    {{< processed-img src="caltrain_lightroom_edit_crop.jpg" alt="The image developed in Lightroom after manual adjustments" link="true" >}}
     <figcaption>The image developed in Lightroom after manually adjusting the exposure and colors.</figcaption>
   </figure>
 </div>

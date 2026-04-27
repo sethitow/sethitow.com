@@ -1,0 +1,107 @@
+{{/* Override of theme figure shortcode to support page bundle resources */}}
+{{- $path := .Get "src" -}}
+{{- $link := .Get "link" -}}
+{{- $target := .Get "target" -}}
+{{- $rel := .Get "rel" -}}
+{{- $class := .Get "class" -}}
+{{- $alt := .Get "alt" -}}
+{{- $attr := .Get "attr" -}}
+{{- $attrlink := .Get "attrlink" -}}
+{{- $title := .Get "title" -}}
+{{- $width := .Get "width" -}}
+{{- $height := .Get "height" -}}
+{{- $caption := .Get "caption" -}}
+{{- $loading := .Get "loading" -}}
+{{- $style := .Get "style" -}}
+{{- $maxWidth := 2000 -}}
+
+{{- $msg1 := "The %q shortcode requires a parameter named %q. See %s" -}}
+{{- $msg2 := "The resource %q passed to %q is not an image. See %s" -}}
+{{- $msg3 := "The resource %q passed to %q could not be found. See %s" -}}
+
+{{- if not (or (findRE `http[s]{0,1}://` $path 1) (findRE `^\/.*` $path 1)) -}}
+  {{ if not $path }}{{ errorf $msg1 .Name "path" .Position }}{{ end }}
+  {{- $i := .Page.Resources.GetMatch $path -}}
+  {{- if not $i -}}
+    {{- $i = resources.Get $path -}}
+  {{- end -}}
+  {{- with $i -}}
+    {{- if eq .MediaType.MainType "image" -}}
+      {{- if not $width -}}{{- $width = .Width -}}{{- end -}}
+      {{- if not $height -}}{{- $height = .Height -}}{{- end -}}
+      {{- if gt (int $width) $maxWidth -}}
+        {{- $height = (int (math.Round (mul (div (float $maxWidth) (float (int $width))) (float (int $height))))) -}}
+        {{- $width = $maxWidth -}}
+      {{- end -}}
+      {{- $jpg := "" -}}
+      {{- $webp := "" -}}
+      {{- if eq .MediaType "image/webp" -}}
+        {{- $jpg = .Resize (printf "%vx%v jpg" $width $height) -}}
+        {{- $webp = .Resize (printf "%vx%v webp" $width $height) -}}
+      {{- else if eq .MediaType "image/jpeg" -}}
+        {{- $webp = .Resize (printf "%vx%v webp" $width $height) -}}
+        {{- $jpg = .Resize (printf "%vx%v jpg" $width $height) -}}
+      {{- else -}}
+        {{- $jpg = .Resize (printf "%vx%v jpg" $width $height) -}}
+        {{- $webp = .Resize (printf "%vx%v webp" $width $height) -}}
+      {{- end -}}
+      <figure{{ with $class }} class="{{ . }}"{{ end }}>
+        {{- if $link -}}<a href="{{ $link }}"{{ with $target }} target="{{ . }}"{{ end }}{{ with $rel }} rel="{{ . }}"{{ end }}>{{- end -}}
+        <picture>
+          <source srcset="{{ $webp.RelPermalink }}" type="image/webp">
+          <source srcset="{{ $jpg.RelPermalink }}" type="image/jpeg">
+          <img src="{{ $webp.RelPermalink }}"{{- if or $alt $caption }} alt="{{ with $alt }}{{ . }}{{ else }}{{ $caption | markdownify| plainify }}{{ end }}"{{- end -}}{{- with $jpg.Width }} width="{{ . }}"{{ end -}}{{- with $jpg.Height }} height="{{ . }}"{{ end -}}{{- with $loading }} loading="{{ . }}"{{ end -}}{{- with $style }} style="{{ . | safeCSS }}"{{ end }} />
+        </picture>
+        {{- if $link }}</a>{{ end -}}
+        {{- if or (or $title $caption) $attr -}}
+        <figcaption>
+          {{- with $title -}}<h4>{{ . }}</h4>{{- end -}}
+          {{- if or $caption $attr -}}<p>
+            {{- $caption | markdownify -}}
+            {{- with $attrlink }} - <a href="{{ . }}">{{- end -}}
+              {{- $attr | markdownify | default $attrlink -}}
+              {{- if $attrlink }}</a>{{ end -}}</p>
+          {{- end -}}
+        </figcaption>
+        {{- end -}}
+      </figure>
+    {{- else -}}{{- errorf $msg2 $path $.Name $.Position -}}
+    {{- end -}}
+  {{- else -}}{{- errorf $msg3 $path .Name .Position -}}
+  {{- end -}}
+{{- else if findRE `^\/.*` $path 1 -}}
+  {{ $path := printf "%s%s" .Site.BaseURL (strings.TrimLeft "/" $path) }}
+  <figure{{ with $class }} class="{{ . }}"{{ end }}>
+    {{- if $link -}}<a href="{{ $link }}"{{ with $target }} target="{{ . }}"{{ end }}{{ with $rel }} rel="{{ . }}"{{ end }}>{{- end -}}
+    <img src="{{ $path }}"{{- if or $alt $caption }} alt="{{ with $alt }}{{ . }}{{ else }}{{ $caption | markdownify| plainify }}{{ end }}"{{- end -}}{{- with $width }} width="{{ . }}"{{ end -}}{{- with $height }} height="{{ . }}"{{ end -}}{{- with $loading }} loading="{{ . }}"{{ end -}}{{- with $style }} style="{{ . | safeCSS }}"{{ end }} />
+    {{- if $link }}</a>{{ end -}}
+    {{- if or (or $title $caption) $attr -}}
+      <figcaption>
+        {{- with $title -}}<h4>{{ . }}</h4>{{- end -}}
+        {{- if or $caption $attr -}}<p>
+          {{- $caption | markdownify -}}
+          {{- with $attrlink }} - <a href="{{ . }}">{{- end -}}
+            {{- $attr | markdownify | default $attrlink -}}
+            {{- if $attrlink }}</a>{{ end -}}</p>
+        {{- end -}}
+      </figcaption>
+    {{- end -}}
+  </figure>
+{{- else -}}
+  <figure{{ with $class }} class="{{ . }}"{{ end }}>
+    {{- if $link -}}<a href="{{ $link }}"{{ with $target }} target="{{ . }}"{{ end }}{{ with $rel }} rel="{{ . }}"{{ end }}>{{- end -}}
+    <img src="{{ $path }}"{{- if or $alt $caption }} alt="{{ with $alt }}{{ . }}{{ else }}{{ $caption | markdownify| plainify }}{{ end }}"{{- end -}}{{- with $width }} width="{{ . }}"{{ end -}}{{- with $height }} height="{{ . }}"{{ end -}}{{- with $loading }} loading="{{ . }}"{{ end -}}{{- with $style }} style="{{ . | safeCSS }}"{{ end }} />
+    {{- if $link }}</a>{{ end -}}
+    {{- if or (or $title $caption) $attr -}}
+      <figcaption>
+        {{- with $title -}}<h4>{{ . }}</h4>{{- end -}}
+        {{- if or $caption $attr -}}<p>
+          {{- $caption | markdownify -}}
+          {{- with $attrlink }} - <a href="{{ . }}">{{- end -}}
+            {{- $attr | markdownify | default $attrlink -}}
+            {{- if $attrlink }}</a>{{ end -}}</p>
+        {{- end -}}
+      </figcaption>
+    {{- end -}}
+  </figure>
+{{- end -}}
