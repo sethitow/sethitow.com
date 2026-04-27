@@ -133,7 +133,7 @@ The vendor SDK provides a function to demosaic the image data, however it provid
 
 It took some trial and error to figure out what Lightroom wants, but I was able to get _most_ files to open. There are still some captures that refuse to open properly, though.
 
-Getting the file to open is only part of the battle, however. If the raw sensor values are developed by Lightroom without any correction, the color hue is both "too green" and "too red" at the same time. Fortunately, the camera has internal color correction parameters that can be read as GenICam feature nodes and written into the DNG file. These parameters help raw developing software do initial color correction. However, even with this correction, the colors don't always look right. It's taken some manual correction to get the color close to what I perceive as "natural".
+Getting the file to open is only part of the battle, however. If the raw sensor values are developed by Lightroom without any correction, the color hue is both "too green" and "too red" at the same time. Fortunately, the camera has internal color correction parameters that can be read as GenICam feature nodes and written into the DNG file. These parameters help raw developing software do initial color correction. The camera also has an "auto white balance" mode that produces red, green, and blue scalar values which can be written into the DNG. However, even with this correction, the colors don't always look right. It's taken some manual correction to get the color close to what I perceive as "natural".
 
 <div style="display: flex; gap: 1em; justify-content: center; flex-wrap: wrap;">
   <figure class="image" style="flex: 1; min-width: 0;">
@@ -149,8 +149,6 @@ Getting the file to open is only part of the battle, however. If the raw sensor 
     <figcaption>The image developed in Lightroom after manually adjusting the exposure and colors.</figcaption>
   </figure>
 </div>
-
-- White balance is tricky. The camera has an "auto white balance" mode that produces red, green, and blue scalar values which can be written into the DNG. Sometimes these help, but often it results in weird tints that must be manually removed using curves.
 
 [^1]: Document scanners and copiers use a similar principle. A flatbed scanner has a single line of sensors that moves across the page, building up the image one row at a time.
 
