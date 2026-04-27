@@ -1,0 +1,592 @@
+<div id="linescan-diagram">
+  <style>
+    #linescan-diagram {
+      font-family:
+        -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      max-width: 800px;
+      margin: 1.5em auto;
+      user-select: none;
+    }
+    #linescan-diagram .ls-panels {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    #linescan-diagram .ls-panel {
+      flex: 1 1 300px;
+      min-width: 280px;
+      max-width: 400px;
+    }
+    #linescan-diagram .ls-panel-label {
+      text-align: center;
+      font-size: 0.85em;
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: inherit;
+      opacity: 0.8;
+    }
+    #linescan-diagram canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      border: 1px solid #555;
+      border-radius: 4px;
+      background: #1a1a2e;
+    }
+    #linescan-diagram .ls-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+    #linescan-diagram .ls-btn {
+      padding: 6px 16px;
+      border: 1px solid #666;
+      border-radius: 4px;
+      background: #2a2a3e;
+      color: #e0e0e0;
+      cursor: pointer;
+      font-size: 0.85em;
+      font-weight: 500;
+      transition: background 0.15s;
+    }
+    #linescan-diagram .ls-btn:hover {
+      background: #3a3a5e;
+    }
+    #linescan-diagram .ls-speed {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8em;
+      color: inherit;
+      opacity: 0.8;
+    }
+    #linescan-diagram .ls-speed input[type="range"] {
+      width: 80px;
+    }
+    #linescan-diagram .ls-slider-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.65em;
+      opacity: 0.5;
+      margin-top: -2px;
+      width: 80px;
+    }
+  </style>
+
+  <div class="ls-panels">
+    <div class="ls-panel">
+      <div class="ls-panel-label">Scene</div>
+      <canvas id="ls-scene-canvas" width="400" height="300"></canvas>
+    </div>
+    <div class="ls-panel">
+      <div class="ls-panel-label">Captured Image</div>
+      <canvas id="ls-capture-canvas" width="400" height="300"></canvas>
+    </div>
+  </div>
+  <div class="ls-controls">
+    <button class="ls-btn" id="ls-play-btn">▶ Play</button>
+    <button class="ls-btn" id="ls-reset-btn">↺ Reset</button>
+    <div class="ls-speed">
+      <span>Speed:</span>
+      <div>
+        <input
+          type="range"
+          id="ls-speed-slider"
+          min="1"
+          max="9"
+          value="5"
+          step="1"
+        />
+        <div class="ls-slider-labels">
+          <span>slower</span><span>faster</span>
+        </div>
+      </div>
+    </div>
+    <div class="ls-speed">
+      <span>Capture Rate:</span>
+      <div>
+        <input
+          type="range"
+          id="ls-rate-slider"
+          min="1"
+          max="9"
+          value="5"
+          step="1"
+        />
+        <div class="ls-slider-labels">
+          <span>slower</span><span>faster</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const sceneCanvas = document.getElementById("ls-scene-canvas");
+      const captureCanvas = document.getElementById("ls-capture-canvas");
+      const playBtn = document.getElementById("ls-play-btn");
+      const resetBtn = document.getElementById("ls-reset-btn");
+      const speedSlider = document.getElementById("ls-speed-slider");
+      const rateSlider = document.getElementById("ls-rate-slider");
+
+      const W = 400;
+      const H = 300;
+
+      // Scale canvases for high-DPI / Retina displays
+      const dpr = window.devicePixelRatio || 1;
+      [sceneCanvas, captureCanvas].forEach((c) => {
+        c.width = W * dpr;
+        c.height = H * dpr;
+      });
+
+      const sceneCtx = sceneCanvas.getContext("2d");
+      const captureCtx = captureCanvas.getContext("2d");
+      sceneCtx.scale(dpr, dpr);
+      captureCtx.scale(dpr, dpr);
+
+      // Scene layout constants
+      const SKY_COLOR = "#87CEEB";
+      const GROUND_COLOR = "#8B7355";
+      const SCENE_TOP_PAD = 50; // space above the train for sky + label
+      const BODY_Y = SCENE_TOP_PAD;
+      const BODY_H = 120;
+      const WHEEL_R = 22;
+      const TRACK_Y = BODY_Y + BODY_H + WHEEL_R + 8;
+      const GROUND_Y = TRACK_Y + 16;
+      const SCENE_BOTTOM = H;
+
+      // Train car dimensions (just the car, transparent background)
+      const TRAIN_W = 360;
+      // Train height: from top of body to bottom of wheels
+      // wheelY = BODY_H + WHEEL_R - 4, bottom of wheel = wheelY + WHEEL_R
+      // So total height = BODY_H + 2*WHEEL_R - 4 + some padding
+      const TRAIN_DRAW_H = BODY_H + WHEEL_R * 2;
+
+      // Scan line X position in scene (fixed)
+      const SCAN_X = W / 2;
+
+      // Offscreen canvas for the train car only (transparent bg)
+      const trainCanvas = document.createElement("canvas");
+      trainCanvas.width = TRAIN_W * dpr;
+      trainCanvas.height = TRAIN_DRAW_H * dpr;
+      const trainCtx = trainCanvas.getContext("2d");
+      trainCtx.scale(dpr, dpr);
+
+      function roundRect(ctx, x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+      }
+
+      // Draw the train car on its own canvas (transparent background)
+      function drawTrainCar(ctx, w, h) {
+        ctx.clearRect(0, 0, w, h);
+
+        const bodyX = 10;
+        const bodyW = w - 20;
+        const bodyY = 0;
+        const bodyH = BODY_H;
+
+        // Car body
+        const grad = ctx.createLinearGradient(
+          bodyX,
+          bodyY,
+          bodyX,
+          bodyY + bodyH,
+        );
+        grad.addColorStop(0, "#CC2222");
+        grad.addColorStop(0.15, "#E03030");
+        grad.addColorStop(0.85, "#CC2222");
+        grad.addColorStop(1, "#991111");
+        ctx.fillStyle = grad;
+        roundRect(ctx, bodyX, bodyY, bodyW, bodyH, 6);
+        ctx.fill();
+
+        // Body outline
+        ctx.strokeStyle = "#771111";
+        ctx.lineWidth = 2;
+        roundRect(ctx, bodyX, bodyY, bodyW, bodyH, 6);
+        ctx.stroke();
+
+        // Roof highlight
+        ctx.fillStyle = "#E85050";
+        roundRect(ctx, bodyX + 4, bodyY + 2, bodyW - 8, 12, 4);
+        ctx.fill();
+
+        // Horizontal stripe
+        ctx.fillStyle = "#FFD700";
+        ctx.fillRect(bodyX + 2, bodyY + bodyH * 0.65, bodyW - 4, 6);
+
+        // Windows
+        const winCount = 6;
+        const winW = 30;
+        const winH = 35;
+        const winY = bodyY + 22;
+        const winSpacing = (bodyW - 60) / (winCount + 1);
+        for (let i = 0; i < winCount; i++) {
+          const wx = bodyX + 30 + winSpacing * (i + 0.5) - winW / 2;
+          ctx.fillStyle = "#A8D8EA";
+          roundRect(ctx, wx, winY, winW, winH, 3);
+          ctx.fill();
+          ctx.strokeStyle = "#555";
+          ctx.lineWidth = 2;
+          roundRect(ctx, wx, winY, winW, winH, 3);
+          ctx.stroke();
+          // Window glare
+          ctx.fillStyle = "rgba(255,255,255,0.3)";
+          ctx.fillRect(wx + 2, winY + 2, winW * 0.4, winH - 4);
+        }
+
+        // Door (center)
+        const doorW = 28;
+        const doorH = 55;
+        const doorX = bodyX + bodyW / 2 - doorW / 2;
+        const doorY = bodyY + bodyH - doorH - 4;
+        ctx.fillStyle = "#884444";
+        roundRect(ctx, doorX, doorY, doorW, doorH, 3);
+        ctx.fill();
+        ctx.strokeStyle = "#662222";
+        ctx.lineWidth = 2;
+        roundRect(ctx, doorX, doorY, doorW, doorH, 3);
+        ctx.stroke();
+        // Door handle
+        ctx.fillStyle = "#FFD700";
+        ctx.beginPath();
+        ctx.arc(doorX + doorW - 7, doorY + doorH / 2, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Truck frames (bogies)
+        ctx.fillStyle = "#444";
+        ctx.fillRect(bodyX + 18, bodyH - 2, 94, 8);
+        ctx.fillRect(bodyX + bodyW - 112, bodyH - 2, 94, 8);
+
+        // Wheels
+        const wheelY = bodyH + WHEEL_R - 4;
+        const wheelPositions = [
+          bodyX + 38,
+          bodyX + 92,
+          bodyX + bodyW - 92,
+          bodyX + bodyW - 38,
+        ];
+        for (const wx of wheelPositions) {
+          ctx.beginPath();
+          ctx.arc(wx, wheelY, WHEEL_R, 0, Math.PI * 2);
+          ctx.fillStyle = "#333";
+          ctx.fill();
+          ctx.strokeStyle = "#555";
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          // Hub
+          ctx.beginPath();
+          ctx.arc(wx, wheelY, 8, 0, Math.PI * 2);
+          ctx.fillStyle = "#777";
+          ctx.fill();
+          // Spokes
+          ctx.strokeStyle = "#666";
+          ctx.lineWidth = 2;
+          for (let a = 0; a < Math.PI * 2; a += Math.PI / 4) {
+            ctx.beginPath();
+            ctx.moveTo(wx + Math.cos(a) * 8, wheelY + Math.sin(a) * 8);
+            ctx.lineTo(
+              wx + Math.cos(a) * (WHEEL_R - 3),
+              wheelY + Math.sin(a) * (WHEEL_R - 3),
+            );
+            ctx.stroke();
+          }
+        }
+
+        // Couplers
+        ctx.fillStyle = "#555";
+        ctx.fillRect(0, bodyH - 20, 14, 16);
+        ctx.fillRect(w - 14, bodyH - 20, 14, 16);
+      }
+
+      // Draw static scene background (sky, ground, tracks)
+      function drawSceneBackground(ctx) {
+        // Sky
+        ctx.fillStyle = SKY_COLOR;
+        ctx.fillRect(0, 0, W, GROUND_Y);
+
+        // Ground
+        ctx.fillStyle = GROUND_COLOR;
+        ctx.fillRect(0, GROUND_Y, W, H - GROUND_Y);
+
+        // Rail ties
+        ctx.fillStyle = "#5C4033";
+        for (let tx = 5; tx < W; tx += 25) {
+          ctx.fillRect(tx, TRACK_Y - 3, 12, 20);
+        }
+
+        // Rails
+        ctx.fillStyle = "#888";
+        ctx.fillRect(0, TRACK_Y, W, 3);
+        ctx.fillRect(0, TRACK_Y + 11, W, 3);
+      }
+
+      // Draw train once to offscreen canvas
+      drawTrainCar(trainCtx, TRAIN_W, TRAIN_DRAW_H);
+
+      // Animation state
+      let playing = false;
+      let trainX = W + 20; // train left edge in scene coords
+      let capturedLines = 0;
+      let animId = null;
+      let lastTime = 0;
+
+      // The captured image will be built column by column.
+      // We capture continuously while the animation runs.
+      // Buffer must be large enough for slowest speed + fastest capture rate.
+      // At speed 1, train travels ~500px, so ~500 frames = 500 lines max.
+      const CAPTURE_TOTAL = 2000;
+
+      // Offscreen canvas for building the captured image
+      const capBuf = document.createElement("canvas");
+      capBuf.width = CAPTURE_TOTAL;
+      capBuf.height = H;
+      const capBufCtx = capBuf.getContext("2d");
+
+      // Offscreen canvas for sampling the scene without the scan line overlay
+      // This avoids issues with getImageData on a DPR-scaled context
+      const sampleCanvas = document.createElement("canvas");
+      sampleCanvas.width = W;
+      sampleCanvas.height = H;
+      const sampleCtx = sampleCanvas.getContext("2d");
+
+      function getSpeed() {
+        return parseInt(speedSlider.value);
+      }
+
+      function getCaptureRate() {
+        return parseInt(rateSlider.value);
+      }
+
+      function reset() {
+        playing = false;
+        playBtn.textContent = "▶ Play";
+        trainX = W + 40;
+        capturedLines = 0;
+        capBufCtx.clearRect(0, 0, CAPTURE_TOTAL, H);
+        if (animId) {
+          cancelAnimationFrame(animId);
+          animId = null;
+        }
+        drawScene();
+        drawCapturePanel();
+      }
+
+      // Draw the scene WITHOUT the scan line overlay (for clean pixel sampling)
+      function drawSceneContent() {
+        sceneCtx.clearRect(0, 0, W, H);
+        drawSceneBackground(sceneCtx);
+        // Draw train: undo the DPR scale, blit the DPR-scaled offscreen canvas, restore
+        sceneCtx.save();
+        sceneCtx.scale(1 / dpr, 1 / dpr);
+        sceneCtx.drawImage(trainCanvas, trainX * dpr, BODY_Y * dpr);
+        sceneCtx.restore();
+      }
+
+      // Draw the scan line overlay and labels on top of the scene
+      function drawSceneOverlay() {
+        // Direction arrow
+        sceneCtx.fillStyle = "rgba(0,0,0,0.5)";
+        sceneCtx.font = "13px sans-serif";
+        sceneCtx.textAlign = "center";
+        sceneCtx.fillText("← direction of travel", W / 2, 18);
+
+        // Scan line
+        sceneCtx.strokeStyle = "#00FF88";
+        sceneCtx.lineWidth = 2;
+        sceneCtx.setLineDash([6, 4]);
+        sceneCtx.beginPath();
+        sceneCtx.moveTo(SCAN_X, 0);
+        sceneCtx.lineTo(SCAN_X, H - 16);
+        sceneCtx.stroke();
+        sceneCtx.setLineDash([]);
+
+        // Camera icon at bottom of scan line (pointing up, in foreground)
+        const camY = H - 14;
+        sceneCtx.fillStyle = "#00CC66";
+        sceneCtx.fillRect(SCAN_X - 14, camY, 28, 12);
+        sceneCtx.strokeStyle = "#009944";
+        sceneCtx.lineWidth = 1;
+        sceneCtx.strokeRect(SCAN_X - 14, camY, 28, 12);
+        // Lens
+        sceneCtx.fillStyle = "#003322";
+        sceneCtx.beginPath();
+        sceneCtx.arc(SCAN_X, camY + 6, 4, 0, Math.PI * 2);
+        sceneCtx.fill();
+
+        // Camera label
+        sceneCtx.fillStyle = "#00CC66";
+        sceneCtx.font = "bold 10px sans-serif";
+        sceneCtx.textAlign = "left";
+        sceneCtx.fillText("camera", SCAN_X + 18, camY + 9);
+      }
+
+      function drawScene() {
+        drawSceneContent();
+        drawSceneOverlay();
+      }
+
+      // Sample the 1px column at SCAN_X from a 1:1 copy of the scene
+      function captureScanLineFromScene() {
+        if (capturedLines >= CAPTURE_TOTAL) return;
+        // Draw the current scene at 1:1 into the sample canvas
+        sampleCtx.clearRect(0, 0, W, H);
+        drawSceneBackgroundTo(sampleCtx);
+        sampleCtx.drawImage(
+          trainCanvas,
+          0,
+          0,
+          trainCanvas.width,
+          trainCanvas.height,
+          trainX,
+          BODY_Y,
+          TRAIN_W,
+          TRAIN_DRAW_H,
+        );
+        const imgData = sampleCtx.getImageData(SCAN_X, 0, 1, H);
+        capBufCtx.putImageData(imgData, capturedLines, 0);
+        capturedLines++;
+      }
+
+      // Draw background to any 1:1 context (for sampling)
+      function drawSceneBackgroundTo(ctx) {
+        ctx.fillStyle = SKY_COLOR;
+        ctx.fillRect(0, 0, W, GROUND_Y);
+        ctx.fillStyle = GROUND_COLOR;
+        ctx.fillRect(0, GROUND_Y, W, H - GROUND_Y);
+        ctx.fillStyle = "#5C4033";
+        for (let tx = 5; tx < W; tx += 25) {
+          ctx.fillRect(tx, TRACK_Y - 3, 12, 20);
+        }
+        ctx.fillStyle = "#888";
+        ctx.fillRect(0, TRACK_Y, W, 3);
+        ctx.fillRect(0, TRACK_Y + 11, W, 3);
+      }
+
+      function drawCapturePanel() {
+        captureCtx.clearRect(0, 0, W, H);
+        captureCtx.fillStyle = "#1a1a2e";
+        captureCtx.fillRect(0, 0, W, H);
+
+        if (capturedLines > 0) {
+          // Preserve aspect ratio: uniform scale to fit captured image in canvas.
+          // Base height is ~60% of panel height at 1:1 scale.
+          // The captured image is capturedLines wide × H tall (source pixels).
+          // We map H source pixels to 40% of panel height at 1:1, then scale
+          // down uniformly if the width exceeds the canvas.
+          const baseH = H * 0.4;
+          const baseScale = baseH / H;
+          const fitScale = Math.min(W / (capturedLines * baseScale), 1);
+          const scale = baseScale * fitScale;
+          const dw = capturedLines * scale;
+          const dh = H * scale;
+          const dx = 0;
+          const dy = (H - dh) / 2; // center vertically
+
+          captureCtx.drawImage(capBuf, 0, 0, capturedLines, H, dx, dy, dw, dh);
+
+          // Bright line at capture edge
+          if (playing) {
+            captureCtx.strokeStyle = "#00FF88";
+            captureCtx.lineWidth = 2;
+            captureCtx.beginPath();
+            const edgeX = dx + dw;
+            captureCtx.moveTo(edgeX, dy);
+            captureCtx.lineTo(edgeX, dy + dh);
+            captureCtx.stroke();
+          }
+        } else {
+          captureCtx.fillStyle = "rgba(255,255,255,0.3)";
+          captureCtx.font = "14px sans-serif";
+          captureCtx.textAlign = "center";
+          captureCtx.fillText("Waiting for subject...", W / 2, H / 2);
+        }
+      }
+
+      function animate(timestamp) {
+        if (!playing) return;
+
+        if (!lastTime) lastTime = timestamp;
+        lastTime = timestamp;
+
+        const speed = getSpeed();
+        const linesPerFrame = getCaptureRate();
+        const pxPerFrame = speed;
+
+        // Move train to the left
+        trainX -= pxPerFrame;
+
+        // Draw the scene content first (without overlay) so we can sample pixels
+        drawSceneContent();
+
+        // Capture N lines per frame (line rate).
+        // Ideal: linesPerFrame == speed (1 line per pixel of movement).
+        // Too few lines = compressed image, too many = stretched image.
+        for (
+          let i = 0;
+          i < linesPerFrame && capturedLines < CAPTURE_TOTAL;
+          i++
+        ) {
+          captureScanLineFromScene();
+        }
+
+        // Now draw the overlay (scan line, camera, labels) on top
+        drawSceneOverlay();
+
+        // Update the capture panel
+        drawCapturePanel();
+
+        // Stop when train has fully passed off screen
+        if (trainX + TRAIN_W < -60) {
+          playing = false;
+          playBtn.textContent = "▶ Play";
+          return;
+        }
+
+        animId = requestAnimationFrame(animate);
+      }
+
+      playBtn.addEventListener("click", function () {
+        if (playing) {
+          playing = false;
+          playBtn.textContent = "▶ Play";
+          if (animId) {
+            cancelAnimationFrame(animId);
+            animId = null;
+          }
+        } else {
+          // If the animation already finished (train off screen), restart
+          if (trainX + TRAIN_W < -60) {
+            trainX = W + 40;
+            capturedLines = 0;
+            capBufCtx.clearRect(0, 0, CAPTURE_TOTAL, H);
+          }
+          playing = true;
+          playBtn.textContent = "⏸ Pause";
+          lastTime = 0;
+          animId = requestAnimationFrame(animate);
+        }
+      });
+
+      resetBtn.addEventListener("click", reset);
+
+      // Initial draw
+      reset();
+    })();
+  </script>
+</div>

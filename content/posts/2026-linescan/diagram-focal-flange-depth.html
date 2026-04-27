@@ -1,0 +1,690 @@
+<div id="ffd-diagram">
+  <style>
+    #ffd-diagram {
+      font-family:
+        -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      max-width: 800px;
+      margin: 1.5em auto;
+      user-select: none;
+    }
+    #ffd-diagram .ffd-panels {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      flex-wrap: nowrap;
+      justify-content: center;
+    }
+    #ffd-diagram .ffd-panel {
+      flex: 1 1 0;
+      min-width: 0;
+      max-width: 380px;
+    }
+    #ffd-diagram .ffd-panel-label {
+      text-align: center;
+      font-size: 0.85em;
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: inherit;
+      opacity: 0.8;
+    }
+    #ffd-diagram canvas {
+      display: block;
+      width: 100%;
+      border: 1px solid #555;
+      border-radius: 4px;
+      background: #1a1a2e;
+    }
+    #ffd-diagram .ffd-status {
+      text-align: center;
+      font-size: 0.75em;
+      margin-top: 4px;
+      font-weight: 600;
+      min-height: 1.2em;
+    }
+    #ffd-diagram .ffd-status.good {
+      color: #00cc66;
+    }
+    #ffd-diagram .ffd-status.bad {
+      color: #ff5555;
+    }
+  </style>
+
+  <div class="ffd-panels">
+    <div class="ffd-panel">
+      <div class="ffd-panel-label">Long Flange Depth Lens</div>
+      <canvas id="ffd-long-canvas" width="260" height="370"></canvas>
+      <div class="ffd-status bad" id="ffd-long-status">
+        ✗ Focal point behind sensor
+      </div>
+    </div>
+    <div class="ffd-panel">
+      <div class="ffd-panel-label">Long Lens + Extension Tube</div>
+      <canvas id="ffd-ext-canvas" width="260" height="370"></canvas>
+      <div class="ffd-status good" id="ffd-ext-status">
+        ✓ Focal point on sensor
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const W = 260;
+      const H = 370;
+      const dpr = window.devicePixelRatio || 1;
+
+      function setupCanvas(canvas) {
+        canvas.width = W * dpr;
+        canvas.height = H * dpr;
+        canvas.style.width = "";
+        const ctx = canvas.getContext("2d");
+        ctx.scale(dpr, dpr);
+        return ctx;
+      }
+
+      const longCanvas = document.getElementById("ffd-long-canvas");
+      const extCanvas = document.getElementById("ffd-ext-canvas");
+      const longCtx = setupCanvas(longCanvas);
+      const extCtx = setupCanvas(extCanvas);
+
+      // Layout constants (vertical: light comes from top, sensor at bottom)
+      const LIGHT_Y = 30;
+      const LENS_Y = 110;
+      const LENS_H = 80;
+      const MOUNT_RING_H = 10;
+
+      // Camera body
+      const CAM_BODY_TOP = 200;
+      const CAM_BODY_LEFT = 40;
+      const CAM_BODY_RIGHT = W - 40;
+      const CAM_BODY_W = CAM_BODY_RIGHT - CAM_BODY_LEFT;
+
+      // For panels 1 & 2, camera bottom and sensor
+      const SENSOR_Y_12 = CAM_BODY_TOP + 60;
+      const CAM_BODY_BOTTOM_12 = SENSOR_Y_12 + 22;
+
+      // Extension tube
+      const EXT_TUBE_H = 50;
+
+      // For panel 3, everything shifts down by EXT_TUBE_H
+      const CAM_BODY_TOP_3 = CAM_BODY_TOP + EXT_TUBE_H;
+      const SENSOR_Y_3 = SENSOR_Y_12 + EXT_TUBE_H;
+      const CAM_BODY_BOTTOM_3 = SENSOR_Y_3 + 22;
+
+      // Flange depth (mount surface to sensor) for panels 1 & 2
+      const FLANGE_DEPTH = SENSOR_Y_12 - CAM_BODY_TOP;
+
+      // Sensor dimensions
+      const SENSOR_W = 60;
+      const SENSOR_X = W / 2 - SENSOR_W / 2;
+
+      function roundRect(ctx, x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+      }
+
+      // Draw a convex lens element (horizontal orientation)
+      function drawLens(ctx, cx, cy, width, color) {
+        ctx.save();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2.5;
+
+        // Top convex surface
+        ctx.beginPath();
+        ctx.moveTo(cx - width / 2, cy);
+        ctx.quadraticCurveTo(cx, cy - 18, cx + width / 2, cy);
+        ctx.stroke();
+
+        // Bottom convex surface
+        ctx.beginPath();
+        ctx.moveTo(cx - width / 2, cy);
+        ctx.quadraticCurveTo(cx, cy + 18, cx + width / 2, cy);
+        ctx.stroke();
+
+        // Fill the lens shape
+        ctx.beginPath();
+        ctx.moveTo(cx - width / 2, cy);
+        ctx.quadraticCurveTo(cx, cy - 18, cx + width / 2, cy);
+        ctx.quadraticCurveTo(cx, cy + 18, cx - width / 2, cy);
+        ctx.closePath();
+        ctx.fillStyle = "rgba(160, 200, 255, 0.15)";
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      // Draw the lens barrel (realistic camera lens housing)
+      function drawLensBarrel(ctx, cx, topY, bottomY, barrelW, color) {
+        const left = cx - barrelW / 2;
+        const barrelH = bottomY - topY;
+
+        // Main barrel body with gradient
+        const bodyGrad = ctx.createLinearGradient(
+          left,
+          topY,
+          left + barrelW,
+          topY,
+        );
+        bodyGrad.addColorStop(0, "#1a1a2a");
+        bodyGrad.addColorStop(0.15, "#2a2a3e");
+        bodyGrad.addColorStop(0.4, "#3a3a52");
+        bodyGrad.addColorStop(0.6, "#3a3a52");
+        bodyGrad.addColorStop(0.85, "#2a2a3e");
+        bodyGrad.addColorStop(1, "#1a1a2a");
+        ctx.fillStyle = bodyGrad;
+        roundRect(ctx, left, topY, barrelW, barrelH, 3);
+        ctx.fill();
+
+        // Barrel outline
+        ctx.strokeStyle = "#555";
+        ctx.lineWidth = 1.5;
+        roundRect(ctx, left, topY, barrelW, barrelH, 3);
+        ctx.stroke();
+
+        // Front element ring (wider, at top)
+        const frontRingW = barrelW + 12;
+        const frontRingLeft = cx - frontRingW / 2;
+        const frontRingH = 10;
+        const frontGrad = ctx.createLinearGradient(
+          frontRingLeft,
+          topY,
+          frontRingLeft + frontRingW,
+          topY,
+        );
+        frontGrad.addColorStop(0, "#222");
+        frontGrad.addColorStop(0.3, "#444");
+        frontGrad.addColorStop(0.7, "#444");
+        frontGrad.addColorStop(1, "#222");
+        ctx.fillStyle = frontGrad;
+        roundRect(ctx, frontRingLeft, topY - 2, frontRingW, frontRingH, 2);
+        ctx.fill();
+        ctx.strokeStyle = "#555";
+        ctx.lineWidth = 1;
+        roundRect(ctx, frontRingLeft, topY - 2, frontRingW, frontRingH, 2);
+        ctx.stroke();
+
+        // Focus ring (textured band in upper portion)
+        const focusRingY = topY + barrelH * 0.15;
+        const focusRingH = barrelH * 0.3;
+        const focusGrad = ctx.createLinearGradient(
+          left,
+          focusRingY,
+          left + barrelW,
+          focusRingY,
+        );
+        focusGrad.addColorStop(0, "#252535");
+        focusGrad.addColorStop(0.15, "#353548");
+        focusGrad.addColorStop(0.5, "#404058");
+        focusGrad.addColorStop(0.85, "#353548");
+        focusGrad.addColorStop(1, "#252535");
+        ctx.fillStyle = focusGrad;
+        ctx.fillRect(left + 1, focusRingY, barrelW - 2, focusRingH);
+
+        // Focus ring grip lines
+        ctx.strokeStyle = "rgba(255,255,255,0.08)";
+        ctx.lineWidth = 1;
+        for (
+          let gy = focusRingY + 3;
+          gy < focusRingY + focusRingH - 2;
+          gy += 4
+        ) {
+          ctx.beginPath();
+          ctx.moveTo(left + 3, gy);
+          ctx.lineTo(left + barrelW - 3, gy);
+          ctx.stroke();
+        }
+
+        // Focus ring top/bottom edges
+        ctx.strokeStyle = "#555";
+        ctx.lineWidth = 0.5;
+        ctx.beginPath();
+        ctx.moveTo(left + 1, focusRingY);
+        ctx.lineTo(left + barrelW - 1, focusRingY);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(left + 1, focusRingY + focusRingH);
+        ctx.lineTo(left + barrelW - 1, focusRingY + focusRingH);
+        ctx.stroke();
+
+        // Zoom/aperture ring (lower portion, slightly different texture)
+        const zoomRingY = focusRingY + focusRingH + barrelH * 0.05;
+        const zoomRingH = barrelH * 0.2;
+        const zoomGrad = ctx.createLinearGradient(
+          left,
+          zoomRingY,
+          left + barrelW,
+          zoomRingY,
+        );
+        zoomGrad.addColorStop(0, "#202030");
+        zoomGrad.addColorStop(0.15, "#303045");
+        zoomGrad.addColorStop(0.5, "#383850");
+        zoomGrad.addColorStop(0.85, "#303045");
+        zoomGrad.addColorStop(1, "#202030");
+        ctx.fillStyle = zoomGrad;
+        ctx.fillRect(left + 1, zoomRingY, barrelW - 2, zoomRingH);
+
+        // Zoom ring diamond knurl pattern
+        ctx.strokeStyle = "rgba(255,255,255,0.06)";
+        ctx.lineWidth = 0.5;
+        const knurlSpacing = 5;
+        for (
+          let gy = zoomRingY + 2;
+          gy < zoomRingY + zoomRingH - 2;
+          gy += knurlSpacing
+        ) {
+          for (let gx = left + 4; gx < left + barrelW - 4; gx += knurlSpacing) {
+            ctx.beginPath();
+            ctx.moveTo(gx, gy);
+            ctx.lineTo(gx + knurlSpacing / 2, gy + knurlSpacing / 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(gx + knurlSpacing, gy);
+            ctx.lineTo(gx + knurlSpacing / 2, gy + knurlSpacing / 2);
+            ctx.stroke();
+          }
+        }
+
+        // Mount ring at bottom (wider, metallic)
+        const mountW = barrelW + 16;
+        const mountLeft = cx - mountW / 2;
+        const mountGrad = ctx.createLinearGradient(
+          mountLeft,
+          bottomY - MOUNT_RING_H,
+          mountLeft + mountW,
+          bottomY,
+        );
+        mountGrad.addColorStop(0, "#333");
+        mountGrad.addColorStop(0.3, "#555");
+        mountGrad.addColorStop(0.7, "#555");
+        mountGrad.addColorStop(1, "#333");
+        ctx.fillStyle = mountGrad;
+        roundRect(
+          ctx,
+          mountLeft,
+          bottomY - MOUNT_RING_H,
+          mountW,
+          MOUNT_RING_H,
+          2,
+        );
+        ctx.fill();
+        ctx.strokeStyle = "#666";
+        ctx.lineWidth = 1;
+        roundRect(
+          ctx,
+          mountLeft,
+          bottomY - MOUNT_RING_H,
+          mountW,
+          MOUNT_RING_H,
+          2,
+        );
+        ctx.stroke();
+
+        // Lens label
+        ctx.fillStyle = "rgba(255,255,255,0.25)";
+        ctx.font = "bold 8px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("LENS", cx, bottomY - MOUNT_RING_H - 6);
+      }
+
+      // Draw the camera body
+      function drawCameraBody(ctx, topY, bottomY) {
+        const grad = ctx.createLinearGradient(
+          CAM_BODY_LEFT,
+          topY,
+          CAM_BODY_RIGHT,
+          topY,
+        );
+        grad.addColorStop(0, "#333");
+        grad.addColorStop(0.5, "#444");
+        grad.addColorStop(1, "#333");
+        ctx.fillStyle = grad;
+        roundRect(ctx, CAM_BODY_LEFT, topY, CAM_BODY_W, bottomY - topY, 4);
+        ctx.fill();
+
+        ctx.strokeStyle = "#666";
+        ctx.lineWidth = 1.5;
+        roundRect(ctx, CAM_BODY_LEFT, topY, CAM_BODY_W, bottomY - topY, 4);
+        ctx.stroke();
+
+        // Mount ring on camera
+        ctx.fillStyle = "#555";
+        const mountW = 90;
+        const mountLeft = W / 2 - mountW / 2;
+        ctx.fillRect(mountLeft, topY - 3, mountW, 6);
+        ctx.strokeStyle = "#777";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(mountLeft, topY - 3, mountW, 6);
+
+        // Label
+        ctx.fillStyle = "rgba(255,255,255,0.4)";
+        ctx.font = "bold 10px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("CAMERA", W / 2, bottomY + 14);
+      }
+
+      // Draw the sensor
+      function drawSensor(ctx, sensorY, highlight) {
+        ctx.fillStyle = highlight ? "#00CC66" : "#884444";
+        ctx.fillRect(SENSOR_X, sensorY - 3, SENSOR_W, 6);
+        ctx.strokeStyle = highlight ? "#00FF88" : "#AA5555";
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(SENSOR_X, sensorY - 3, SENSOR_W, 6);
+
+        const segments = 8;
+        const segW = SENSOR_W / segments;
+        for (let i = 0; i < segments; i++) {
+          ctx.fillStyle = highlight
+            ? `rgba(0, 255, 136, ${0.3 + Math.random() * 0.2})`
+            : `rgba(255, 100, 100, ${0.2 + Math.random() * 0.15})`;
+          ctx.fillRect(SENSOR_X + i * segW + 0.5, sensorY - 2, segW - 1, 4);
+        }
+
+        ctx.fillStyle = highlight ? "#00CC66" : "#AA5555";
+        ctx.font = "bold 9px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("SENSOR", W / 2, sensorY + 14);
+      }
+
+      // Draw light rays converging through a lens to a focal point
+      function drawLightRays(
+        ctx,
+        lensY,
+        focalY,
+        color,
+        focalColor,
+        clipBottom,
+      ) {
+        const cx = W / 2;
+        const lensHalf = 34;
+        const rayCount = 5;
+
+        ctx.save();
+
+        for (let i = 0; i < rayCount; i++) {
+          const t = i / (rayCount - 1);
+          const lensX = cx - lensHalf + t * lensHalf * 2;
+
+          // Incoming ray (parallel, from top to lens)
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 1.2;
+          ctx.globalAlpha = 0.7;
+          ctx.beginPath();
+          ctx.moveTo(lensX, LIGHT_Y);
+          ctx.lineTo(lensX, lensY);
+          ctx.stroke();
+
+          // Refracted ray (from lens toward focal point)
+          // If clipBottom is set, clip the ray there
+          if (clipBottom !== undefined && focalY > clipBottom) {
+            // Ray doesn't reach focal point - clip at bottom
+            const frac = (clipBottom - lensY) / (focalY - lensY);
+            const clipX = lensX + (cx - lensX) * frac;
+            ctx.beginPath();
+            ctx.moveTo(lensX, lensY);
+            ctx.lineTo(clipX, clipBottom);
+            ctx.stroke();
+          } else {
+            ctx.beginPath();
+            ctx.moveTo(lensX, lensY);
+            ctx.lineTo(cx, focalY);
+            ctx.stroke();
+          }
+        }
+
+        // Continue rays past focal point (diverging) - only if focal point is visible
+        if (clipBottom === undefined || focalY <= clipBottom) {
+          const pastFocalDist = 30;
+          ctx.globalAlpha = 0.25;
+          for (let i = 0; i < rayCount; i++) {
+            const t = i / (rayCount - 1);
+            const lensX = cx - lensHalf + t * lensHalf * 2;
+
+            // Direction from lens to focal point
+            const dx = lensX - cx; // reverse: diverge away from center
+            const dy = lensY - focalY; // reverse: continue downward past focal
+            const len = Math.sqrt(dx * dx + dy * dy);
+            const ndx = dx / len;
+            const ndy = dy / len;
+
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(cx, focalY);
+            ctx.lineTo(cx + ndx * pastFocalDist, focalY - ndy * pastFocalDist);
+            ctx.stroke();
+          }
+        }
+
+        ctx.globalAlpha = 1.0;
+
+        // Focal point marker
+        ctx.beginPath();
+        ctx.arc(cx, focalY, 5, 0, Math.PI * 2);
+        ctx.fillStyle = focalColor;
+        ctx.fill();
+        ctx.strokeStyle = focalColor;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      // Draw a dimension line with label
+      function drawDimension(ctx, x, y1, y2, label, color, side) {
+        const offset = side === "left" ? -1 : 1;
+        const lineOffset = side === "left" ? 0 : 4;
+        const textX = lineOffset + x + offset * 6;
+
+        ctx.save();
+        ctx.strokeStyle = color;
+        ctx.fillStyle = color;
+        ctx.lineWidth = 1;
+        ctx.setLineDash([3, 3]);
+
+        // Vertical line
+        ctx.beginPath();
+        ctx.moveTo(x, y1);
+        ctx.lineTo(x, y2);
+        ctx.stroke();
+
+        ctx.setLineDash([]);
+
+        // Top arrow
+        ctx.beginPath();
+        ctx.moveTo(x - 4, y1 + 8);
+        ctx.lineTo(x, y1);
+        ctx.lineTo(x + 4, y1 + 8);
+        ctx.stroke();
+
+        // Bottom arrow
+        ctx.beginPath();
+        ctx.moveTo(x - 4, y2 - 8);
+        ctx.lineTo(x, y2);
+        ctx.lineTo(x + 4, y2 - 8);
+        ctx.stroke();
+
+        // Label (rotated)
+        ctx.font = "bold 9px sans-serif";
+        ctx.textAlign = "center";
+        ctx.translate(textX, (y1 + y2) / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillText(label, 0, 0);
+
+        ctx.restore();
+      }
+
+      // Draw extension tube
+      function drawExtensionTube(ctx, cx, topY, height, tubeW) {
+        const left = cx - tubeW / 2;
+
+        const grad = ctx.createLinearGradient(left, topY, left + tubeW, topY);
+        grad.addColorStop(0, "#553300");
+        grad.addColorStop(0.5, "#885522");
+        grad.addColorStop(1, "#553300");
+        ctx.fillStyle = grad;
+        ctx.fillRect(left, topY, tubeW, height);
+
+        ctx.strokeStyle = "#AA7733";
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(left, topY, tubeW, height);
+
+        // Hatching
+        ctx.strokeStyle = "rgba(255, 200, 100, 0.2)";
+        ctx.lineWidth = 0.5;
+        for (let y = topY + 6; y < topY + height; y += 6) {
+          ctx.beginPath();
+          ctx.moveTo(left + 2, y);
+          ctx.lineTo(left + tubeW - 2, y);
+          ctx.stroke();
+        }
+
+        // Label
+        ctx.fillStyle = "#DDAA55";
+        ctx.font = "bold 8px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("EXTENSION", cx, topY + height / 2 - 3);
+        ctx.fillText("TUBE", cx, topY + height / 2 + 7);
+      }
+
+      // === Panel 1: Long flange depth lens (incorrect) ===
+      function drawLongPanel() {
+        const ctx = longCtx;
+        ctx.clearRect(0, 0, W, H);
+
+        const cx = W / 2;
+        const lensBarrelW = 70;
+        const lensTop = LENS_Y - LENS_H / 2 - 10;
+        const lensBottom = CAM_BODY_TOP;
+        const focalY = SENSOR_Y_12 + EXT_TUBE_H; // focal point behind sensor
+
+        // Camera body
+        drawCameraBody(ctx, CAM_BODY_TOP, CAM_BODY_BOTTOM_12);
+
+        // Sensor (not highlighted)
+        drawSensor(ctx, SENSOR_Y_12, false);
+
+        // Lens barrel
+        drawLensBarrel(ctx, cx, lensTop, lensBottom, lensBarrelW, "#6688BB");
+
+        // Lens element
+        drawLens(ctx, cx, LENS_Y, 68, "#88AADD");
+
+        // Light rays - focal point is behind the sensor, clip at camera bottom
+        drawLightRays(ctx, LENS_Y, focalY, "#FFD700", "#FF5555");
+
+        // Flange depth dimension
+        drawDimension(
+          ctx,
+          CAM_BODY_LEFT - 10,
+          CAM_BODY_TOP,
+          SENSOR_Y_12,
+          "flange depth",
+          "rgba(255,255,255,0.5)",
+          "left",
+        );
+
+        // Focal distance dimension (from lens to focal point, longer)
+        drawDimension(
+          ctx,
+          CAM_BODY_RIGHT + 8,
+          LENS_Y,
+          focalY,
+          "focal distance",
+          "#FF5555",
+          "right",
+        );
+
+        // Incoming light label
+        ctx.fillStyle = "rgba(255, 215, 0, 0.7)";
+        ctx.font = "10px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("incoming light", cx, LIGHT_Y - 8);
+
+        // "Not converged" annotation at sensor
+        ctx.fillStyle = "#FF5555";
+        ctx.font = "bold 9px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("not converged", cx + 50, SENSOR_Y_12 + 52);
+        ctx.fillText("at sensor plane", cx + 50, SENSOR_Y_12 + 62);
+
+        // Bottom annotation
+        ctx.fillStyle = "rgba(255,100,100,0.5)";
+        ctx.font = "9px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("focal distance > flange depth", cx, H - 8);
+      }
+
+      // === Panel 3: Long flange depth lens + extension tube (correct) ===
+      function drawExtPanel() {
+        const ctx = extCtx;
+        ctx.clearRect(0, 0, W, H);
+
+        const cx = W / 2;
+        const lensBarrelW = 70;
+        const extTubeW = 86;
+
+        const lensTop = LENS_Y - LENS_H / 2 - 10;
+        const lensBottom = CAM_BODY_TOP;
+        const focalY = SENSOR_Y_3; // now focal point reaches the sensor
+
+        // Camera body (shifted down)
+        drawCameraBody(ctx, CAM_BODY_TOP_3, CAM_BODY_BOTTOM_3);
+
+        // Sensor
+        drawSensor(ctx, SENSOR_Y_3, true);
+
+        // Extension tube
+        drawExtensionTube(ctx, cx, CAM_BODY_TOP, EXT_TUBE_H, extTubeW);
+
+        // Lens barrel
+        drawLensBarrel(ctx, cx, lensTop, CAM_BODY_TOP, lensBarrelW, "#6688BB");
+
+        // Lens element
+        drawLens(ctx, cx, LENS_Y, 68, "#88AADD");
+
+        // Light rays
+        drawLightRays(ctx, LENS_Y, focalY, "#FFD700", "#00FF88");
+
+        // Flange depth + extension dimension
+        drawDimension(
+          ctx,
+          CAM_BODY_LEFT - 8,
+          CAM_BODY_TOP,
+          SENSOR_Y_3,
+          "flange + extension",
+          "rgba(255,255,255,0.5)",
+          "left",
+        );
+
+        // Focal distance dimension (from lens to focal point)
+        drawDimension(
+          ctx,
+          CAM_BODY_RIGHT + 8,
+          LENS_Y,
+          focalY,
+          "focal distance",
+          "#FFD700",
+          "right",
+        );
+
+        // Incoming light label
+        ctx.fillStyle = "rgba(255, 215, 0, 0.7)";
+        ctx.font = "10px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("incoming light", cx, LIGHT_Y - 8);
+      }
+
+      // Draw both panels
+      drawLongPanel();
+      drawExtPanel();
+    })();
+  </script>
+</div>

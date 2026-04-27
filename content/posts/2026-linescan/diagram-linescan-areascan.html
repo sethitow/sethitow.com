@@ -1,0 +1,480 @@
+<div id="compare-diagram">
+  <style>
+    #compare-diagram {
+      font-family:
+        -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      max-width: 800px;
+      margin: 1.5em auto;
+      user-select: none;
+    }
+    #compare-diagram .cd-panels {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    #compare-diagram .cd-panel {
+      flex: 1 1 300px;
+      min-width: 280px;
+      max-width: 400px;
+    }
+    #compare-diagram .cd-panel-label {
+      text-align: center;
+      font-size: 0.85em;
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: inherit;
+      opacity: 0.8;
+    }
+    #compare-diagram canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      border: 1px solid #555;
+      border-radius: 4px;
+      background: #1a1a2e;
+    }
+  </style>
+
+  <div class="cd-panels">
+    <div class="cd-panel">
+      <div class="cd-panel-label">Area Scan Camera</div>
+      <canvas id="cd-area-canvas" width="400" height="340"></canvas>
+    </div>
+    <div class="cd-panel">
+      <div class="cd-panel-label">Line Scan Camera</div>
+      <canvas id="cd-line-canvas" width="400" height="340"></canvas>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const areaCanvas = document.getElementById("cd-area-canvas");
+      const lineCanvas = document.getElementById("cd-line-canvas");
+
+      const W = 400;
+      const H = 340;
+
+      // Scale canvases for high-DPI / Retina displays
+      const dpr = window.devicePixelRatio || 1;
+      [areaCanvas, lineCanvas].forEach((c) => {
+        c.width = W * dpr;
+        c.height = H * dpr;
+      });
+
+      const areaCtx = areaCanvas.getContext("2d");
+      const lineCtx = lineCanvas.getContext("2d");
+      areaCtx.scale(dpr, dpr);
+      lineCtx.scale(dpr, dpr);
+
+      // Scene layout constants
+      const SKY_COLOR = "#87CEEB";
+      const GROUND_COLOR = "#8B7355";
+      const SCENE_TOP_PAD = 50;
+      const BODY_Y = SCENE_TOP_PAD;
+      const BODY_H = 120;
+      const WHEEL_R = 22;
+      const TRACK_Y = BODY_Y + BODY_H + WHEEL_R + 8;
+      const GROUND_Y = TRACK_Y + 16;
+
+      // Train car dimensions (just the car, transparent background)
+      const TRAIN_W = 360;
+      const TRAIN_DRAW_H = BODY_H + WHEEL_R * 2;
+
+      // Camera position (below ground, looking up)
+      const CAM_Y = H - 18;
+
+      // Offscreen canvas for the train car only (transparent bg)
+      const trainCanvas = document.createElement("canvas");
+      trainCanvas.width = TRAIN_W * dpr;
+      trainCanvas.height = TRAIN_DRAW_H * dpr;
+      const trainCtx = trainCanvas.getContext("2d");
+      trainCtx.scale(dpr, dpr);
+
+      function roundRect(ctx, x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+      }
+
+      // Draw the train car on its own canvas (transparent background)
+      function drawTrainCar(ctx, w, h) {
+        ctx.clearRect(0, 0, w, h);
+
+        const bodyX = 10;
+        const bodyW = w - 20;
+        const bodyY = 0;
+        const bodyH = BODY_H;
+
+        // Car body
+        const grad = ctx.createLinearGradient(
+          bodyX,
+          bodyY,
+          bodyX,
+          bodyY + bodyH,
+        );
+        grad.addColorStop(0, "#CC2222");
+        grad.addColorStop(0.15, "#E03030");
+        grad.addColorStop(0.85, "#CC2222");
+        grad.addColorStop(1, "#991111");
+        ctx.fillStyle = grad;
+        roundRect(ctx, bodyX, bodyY, bodyW, bodyH, 6);
+        ctx.fill();
+
+        // Body outline
+        ctx.strokeStyle = "#771111";
+        ctx.lineWidth = 2;
+        roundRect(ctx, bodyX, bodyY, bodyW, bodyH, 6);
+        ctx.stroke();
+
+        // Roof highlight
+        ctx.fillStyle = "#E85050";
+        roundRect(ctx, bodyX + 4, bodyY + 2, bodyW - 8, 12, 4);
+        ctx.fill();
+
+        // Horizontal stripe
+        ctx.fillStyle = "#FFD700";
+        ctx.fillRect(bodyX + 2, bodyY + bodyH * 0.65, bodyW - 4, 6);
+
+        // Windows
+        const winCount = 6;
+        const winW = 30;
+        const winH = 35;
+        const winY = bodyY + 22;
+        const winSpacing = (bodyW - 60) / (winCount + 1);
+        for (let i = 0; i < winCount; i++) {
+          const wx = bodyX + 30 + winSpacing * (i + 0.5) - winW / 2;
+          ctx.fillStyle = "#A8D8EA";
+          roundRect(ctx, wx, winY, winW, winH, 3);
+          ctx.fill();
+          ctx.strokeStyle = "#555";
+          ctx.lineWidth = 2;
+          roundRect(ctx, wx, winY, winW, winH, 3);
+          ctx.stroke();
+          // Window glare
+          ctx.fillStyle = "rgba(255,255,255,0.3)";
+          ctx.fillRect(wx + 2, winY + 2, winW * 0.4, winH - 4);
+        }
+
+        // Door (center)
+        const doorW = 28;
+        const doorH = 55;
+        const doorX = bodyX + bodyW / 2 - doorW / 2;
+        const doorY = bodyY + bodyH - doorH - 4;
+        ctx.fillStyle = "#884444";
+        roundRect(ctx, doorX, doorY, doorW, doorH, 3);
+        ctx.fill();
+        ctx.strokeStyle = "#662222";
+        ctx.lineWidth = 2;
+        roundRect(ctx, doorX, doorY, doorW, doorH, 3);
+        ctx.stroke();
+        // Door handle
+        ctx.fillStyle = "#FFD700";
+        ctx.beginPath();
+        ctx.arc(doorX + doorW - 7, doorY + doorH / 2, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Truck frames (bogies)
+        ctx.fillStyle = "#444";
+        ctx.fillRect(bodyX + 18, bodyH - 2, 94, 8);
+        ctx.fillRect(bodyX + bodyW - 112, bodyH - 2, 94, 8);
+
+        // Wheels
+        const wheelY = bodyH + WHEEL_R - 4;
+        const wheelPositions = [
+          bodyX + 38,
+          bodyX + 92,
+          bodyX + bodyW - 92,
+          bodyX + bodyW - 38,
+        ];
+        for (const wx of wheelPositions) {
+          ctx.beginPath();
+          ctx.arc(wx, wheelY, WHEEL_R, 0, Math.PI * 2);
+          ctx.fillStyle = "#333";
+          ctx.fill();
+          ctx.strokeStyle = "#555";
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          // Hub
+          ctx.beginPath();
+          ctx.arc(wx, wheelY, 8, 0, Math.PI * 2);
+          ctx.fillStyle = "#777";
+          ctx.fill();
+          // Spokes
+          ctx.strokeStyle = "#666";
+          ctx.lineWidth = 2;
+          for (let a = 0; a < Math.PI * 2; a += Math.PI / 4) {
+            ctx.beginPath();
+            ctx.moveTo(wx + Math.cos(a) * 8, wheelY + Math.sin(a) * 8);
+            ctx.lineTo(
+              wx + Math.cos(a) * (WHEEL_R - 3),
+              wheelY + Math.sin(a) * (WHEEL_R - 3),
+            );
+            ctx.stroke();
+          }
+        }
+
+        // Couplers
+        ctx.fillStyle = "#555";
+        ctx.fillRect(0, bodyH - 20, 14, 16);
+        ctx.fillRect(w - 14, bodyH - 20, 14, 16);
+      }
+
+      // Draw the train car once to offscreen canvas
+      drawTrainCar(trainCtx, TRAIN_W, TRAIN_DRAW_H);
+
+      // Draw the background (sky, ground, tracks)
+      function drawBackground(ctx) {
+        ctx.fillStyle = SKY_COLOR;
+        ctx.fillRect(0, 0, W, GROUND_Y);
+        ctx.fillStyle = GROUND_COLOR;
+        ctx.fillRect(0, GROUND_Y, W, H - GROUND_Y);
+
+        // Rail ties
+        ctx.fillStyle = "#5C4033";
+        for (let tx = 5; tx < W; tx += 25) {
+          ctx.fillRect(tx, TRACK_Y - 3, 12, 20);
+        }
+        // Rails
+        ctx.fillStyle = "#888";
+        ctx.fillRect(0, TRACK_Y, W, 3);
+        ctx.fillRect(0, TRACK_Y + 11, W, 3);
+      }
+
+      // Draw the train centered on the canvas
+      function drawTrain(ctx) {
+        const trainX = (W - TRAIN_W) / 2;
+        ctx.save();
+        ctx.scale(1 / dpr, 1 / dpr);
+        ctx.drawImage(trainCanvas, trainX * dpr, BODY_Y * dpr);
+        ctx.restore();
+      }
+
+      // Draw a camera icon
+      function drawCamera(ctx, x, y, color) {
+        ctx.fillStyle = color;
+        ctx.fillRect(x - 14, y, 28, 12);
+        ctx.strokeStyle = color === "#00CC66" ? "#009944" : "#0055AA";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x - 14, y, 28, 12);
+        // Lens
+        ctx.fillStyle = "#111";
+        ctx.beginPath();
+        ctx.arc(x, y + 6, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Draw the area scan panel
+      function drawAreaScan() {
+        areaCtx.clearRect(0, 0, W, H);
+        drawBackground(areaCtx);
+        drawTrain(areaCtx);
+
+        // Area scan field of view - a rectangle covering the full scene
+        const fovLeft = 60;
+        const fovRight = W - 60;
+        const fovTop = 30;
+        const fovBottom = GROUND_Y + 20;
+
+        // Dim everything outside the FOV
+        areaCtx.fillStyle = "rgba(0,0,0,0.25)";
+        areaCtx.fillRect(0, 0, fovLeft, H);
+        areaCtx.fillRect(fovRight, 0, W - fovRight, H);
+        areaCtx.fillRect(fovLeft, 0, fovRight - fovLeft, fovTop);
+        areaCtx.fillRect(fovLeft, fovBottom, fovRight - fovLeft, H - fovBottom);
+
+        // FOV border
+        areaCtx.strokeStyle = "#4488FF";
+        areaCtx.lineWidth = 2;
+        areaCtx.setLineDash([6, 4]);
+        areaCtx.strokeRect(
+          fovLeft,
+          fovTop,
+          fovRight - fovLeft,
+          fovBottom - fovTop,
+        );
+        areaCtx.setLineDash([]);
+
+        // Grid overlay to show 2D pixel array
+        areaCtx.strokeStyle = "rgba(68, 136, 255, 0.2)";
+        areaCtx.lineWidth = 0.5;
+        const gridSize = 20;
+        for (let gx = fovLeft; gx <= fovRight; gx += gridSize) {
+          areaCtx.beginPath();
+          areaCtx.moveTo(gx, fovTop);
+          areaCtx.lineTo(gx, fovBottom);
+          areaCtx.stroke();
+        }
+        for (let gy = fovTop; gy <= fovBottom; gy += gridSize) {
+          areaCtx.beginPath();
+          areaCtx.moveTo(fovLeft, gy);
+          areaCtx.lineTo(fovRight, gy);
+          areaCtx.stroke();
+        }
+
+        // Camera below scene, centered
+        drawCamera(areaCtx, W / 2, CAM_Y, "#4488FF");
+
+        // FOV lines from camera to corners
+        areaCtx.strokeStyle = "rgba(68, 136, 255, 0.4)";
+        areaCtx.lineWidth = 1;
+        areaCtx.setLineDash([4, 4]);
+        areaCtx.beginPath();
+        areaCtx.moveTo(W / 2, CAM_Y);
+        areaCtx.lineTo(fovLeft, fovBottom);
+        areaCtx.stroke();
+        areaCtx.beginPath();
+        areaCtx.moveTo(W / 2, CAM_Y);
+        areaCtx.lineTo(fovRight, fovBottom);
+        areaCtx.stroke();
+        areaCtx.setLineDash([]);
+
+        // Label
+        areaCtx.fillStyle = "#4488FF";
+        areaCtx.font = "bold 10px sans-serif";
+        areaCtx.textAlign = "left";
+        areaCtx.fillText("camera", W / 2 + 18, CAM_Y + 9);
+
+        // Sensor diagram inset (bottom-left)
+        drawAreaSensor(areaCtx, 10, H - 70, 70, 55);
+      }
+
+      // Draw a small area sensor diagram
+      function drawAreaSensor(ctx, x, y, w, h) {
+        ctx.fillStyle = "rgba(0,0,0,0.55)";
+        roundRect(ctx, x - 2, y - 2, w + 4, h + 4, 4);
+        ctx.fill();
+
+        // Sensor chip
+        ctx.fillStyle = "#2a2a4e";
+        ctx.fillRect(x, y, w, h);
+        ctx.strokeStyle = "#4488FF";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x, y, w, h);
+
+        // Pixel grid
+        const cols = 7;
+        const rows = 5;
+        const cellW = w / cols;
+        const cellH = h / rows;
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            const cx = x + c * cellW;
+            const cy = y + r * cellH;
+            ctx.fillStyle = `rgba(68, 136, 255, ${0.15 + Math.random() * 0.25})`;
+            ctx.fillRect(cx + 1, cy + 1, cellW - 2, cellH - 2);
+          }
+        }
+
+        // Label
+        ctx.fillStyle = "#4488FF";
+        ctx.font = "bold 9px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("2D sensor", x + w / 2, y - 6);
+      }
+
+      // Draw the line scan panel
+      function drawLineScan() {
+        lineCtx.clearRect(0, 0, W, H);
+        drawBackground(lineCtx);
+        drawTrain(lineCtx);
+
+        // Direction arrow
+        lineCtx.fillStyle = "rgba(0,0,0,0.5)";
+        lineCtx.font = "13px sans-serif";
+        lineCtx.textAlign = "center";
+        lineCtx.fillText("← direction of travel", W / 2, 18);
+
+        // Scan line - single vertical line
+        const scanX = W / 2;
+
+        // Dim everything except the scan line
+        lineCtx.fillStyle = "rgba(0,0,0,0.25)";
+        lineCtx.fillRect(0, 0, scanX - 2, H);
+        lineCtx.fillRect(scanX + 2, 0, W - scanX - 2, H);
+
+        // Scan line
+        lineCtx.strokeStyle = "#00FF88";
+        lineCtx.lineWidth = 2;
+        lineCtx.setLineDash([6, 4]);
+        lineCtx.beginPath();
+        lineCtx.moveTo(scanX, 30);
+        lineCtx.lineTo(scanX, GROUND_Y + 20);
+        lineCtx.stroke();
+        lineCtx.setLineDash([]);
+
+        // Pixel dots along the scan line to show 1D array
+        lineCtx.fillStyle = "rgba(0, 255, 136, 0.3)";
+        for (let py = 30; py <= GROUND_Y + 20; py += 8) {
+          lineCtx.beginPath();
+          lineCtx.arc(scanX, py, 3, 0, Math.PI * 2);
+          lineCtx.fill();
+        }
+
+        // Camera below scene, centered
+        drawCamera(lineCtx, scanX, CAM_Y, "#00CC66");
+
+        // FOV lines from camera to scan line ends
+        lineCtx.strokeStyle = "rgba(0, 204, 102, 0.4)";
+        lineCtx.lineWidth = 1;
+        lineCtx.setLineDash([4, 4]);
+        lineCtx.beginPath();
+        lineCtx.moveTo(scanX, CAM_Y);
+        lineCtx.lineTo(scanX, GROUND_Y + 20);
+        lineCtx.stroke();
+        lineCtx.setLineDash([]);
+
+        // Label
+        lineCtx.fillStyle = "#00CC66";
+        lineCtx.font = "bold 10px sans-serif";
+        lineCtx.textAlign = "left";
+        lineCtx.fillText("camera", scanX + 18, CAM_Y + 9);
+
+        // Sensor diagram inset (bottom-left, vertical, aligned with area scan sensor)
+        drawLineSensor(lineCtx, 20, H - 70, 12, 12 * 5);
+      }
+
+      // Draw a small vertical line sensor diagram
+      function drawLineSensor(ctx, x, y, w, h) {
+        ctx.fillStyle = "rgba(0,0,0,0.55)";
+        roundRect(ctx, x - 2, y - 2, w + 4, h + 4, 4);
+        ctx.fill();
+
+        // Sensor chip (tall and narrow)
+        ctx.fillStyle = "#1a2e1a";
+        ctx.fillRect(x, y, w, h);
+        ctx.strokeStyle = "#00CC66";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x, y, w, h);
+
+        // Single column of pixels (vertical, square cells)
+        const rows = 5;
+        const cellH = h / rows;
+        for (let r = 0; r < rows; r++) {
+          const cy = y + r * cellH;
+          ctx.fillStyle = `rgba(0, 255, 136, ${0.2 + Math.random() * 0.35})`;
+          ctx.fillRect(x + 1, cy + 0.5, w - 2, cellH - 1);
+        }
+
+        // Label (horizontal, centered above the sensor)
+        ctx.fillStyle = "#00CC66";
+        ctx.font = "bold 9px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("1D sensor", x + w / 2, y - 6);
+      }
+
+      // Draw both panels
+      drawAreaScan();
+      drawLineScan();
+    })();
+  </script>
+</div>
