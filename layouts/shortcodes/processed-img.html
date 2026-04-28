@@ -1,6 +1,6 @@
 {{- $src := .Get "src" -}}
 {{- $alt := .Get "alt" | default "" -}}
-{{- $style := .Get "style" | default "" -}}
+{{- $style := .Get "style" | default "" | safeCSS -}}
 {{- $class := .Get "class" | default "" -}}
 {{- $loading := .Get "loading" | default "lazy" -}}
 {{- $link := .Get "link" | default "" -}}
