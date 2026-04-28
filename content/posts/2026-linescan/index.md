@@ -120,19 +120,13 @@ After the image is captured, it is stored as "raw" image data, which isn't direc
 
 Digital cameras capture color images by putting a "color filter array" in front of the sensor. The most common color filter array is the Bayer pattern, which is a 2x2 grid with one red, one blue, and two green pixels. There are more green pixels because the human eye is more sensitive to green light.
 
-<figure class="image">
-  {{< processed-img src="bayer-pattern.png" alt="The Bayer pattern over an image sensor" >}}
-  <figcaption>The Bayer pattern over an image sensor.</figcaption>
-</figure>
+{{< figure src="bayer-pattern.png" alt="The Bayer pattern over an image sensor" caption="The Bayer pattern over an image sensor." class="image" >}}
 
 The color filter array limits each pixel on the sensor to detecting only one color: red, blue, or green. This means each pixel of the raw captured image contains only one color channel. However, on an LCD screen, each pixel has all three colors. To develop the image, the two missing channels for each pixel must be interpolated from the neighboring pixels.
 
 The vendor SDK provides a function to demosaic the image data; however, it offers limited options and ultimately results in poor control of the final output. To allow more ergonomic editing and color correction, I implemented a converter to save the camera raw files as Adobe DNG files that can be opened by Adobe Lightroom, Affinity Photo, and other photo editing software. The DNG file format is public and well documented; however, Lightroom is very finicky about what it will accept. There are many "optional" fields in the file format that Lightroom seems to require, and it does not give clear error messages about what it doesn't like about a given file.
 
-<figure class="image">
-  {{< processed-img src="lightroom-error.png" alt="A supremely unhelpful error from Lightroom" >}}
-  <figcaption>A supremely unhelpful error from Lightroom after trying to import a valid DNG file.</figcaption>
-</figure>
+{{< figure src="lightroom-error.png" alt="A supremely unhelpful error from Lightroom" caption="A supremely unhelpful error from Lightroom after trying to import a valid DNG file." class="image" >}}
 
 It took some trial and error to figure out what Lightroom wants, but I was able to get _most_ files to open. There are still some captures that refuse to open properly, though.
 
