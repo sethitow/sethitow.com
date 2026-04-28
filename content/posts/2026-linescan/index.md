@@ -27,7 +27,7 @@ categories:
 
 # Introduction
 
-Most digital cameras are area scan cameras. They use a sensor with a two-dimensional grid of light-sensitive points to capture an image. Area scan cameras excel in capturing stationary subjects, however they can only capture moving subjects if the exposure time is fast enough that the image doesn't have motion blur.
+Most digital cameras are area scan cameras. They use a sensor with a two-dimensional grid of light-sensitive points to capture an image. Area scan cameras excel at capturing stationary subjects; however, they can only capture moving subjects if the exposure time is fast enough that the image doesn't have motion blur.
 
 There is another type of camera that is only common in industrial applications called a line scan camera. It uses a one-dimensional line of light-sensitive points which only capture one "line" of an image. To capture a full image, the subject must move relative to the camera so that it can be "scanned".
 
@@ -37,17 +37,17 @@ For certain industrial applications, line scan cameras have several advantages o
 
 Because capturing a clear image requires the subject to move at a constant speed relative to the camera, line scan cameras are rarely used outside of these industrial settings. One notable exception are photo finish cameras used in track-and-field and horse racing. These cameras are line scan cameras oriented perpendicular to the finish line. As runners cross the line, the camera builds up an image that precisely captures the order of finish.
 
-Line scan cameras have also been used for artistic photography, most notably by photographer [Adam Magyar](https://www.adammagyar.com/). Magyar home-built a line-scan camera using the sensor from a document scanner[^1], and used it to create panoramas of subway platforms and city streets. [Daniel Lawrence Lu](https://daniel.lawrence.lu) has also blogged about using an industrial lines scan camera to capture images of trains; his blog posts inspired me to take up this project.
+Line scan cameras have also been used for artistic photography, most notably by photographer [Adam Magyar](https://www.adammagyar.com/). Magyar home-built a line-scan camera using the sensor from a document scanner[^1], and used it to create panoramas of subway platforms and city streets. [Daniel Lawrence Lu](https://daniel.lawrence.lu) has also blogged about using an industrial line scan camera to capture images of trains; his blog posts inspired me to take up this project.
 
-In order to capture an accurate image, it's important that the line capture rate is synchronized with the speed of the object. If the camera is capturing too slow, the image will look squished. If the camera is capturing too fast, the image will look stretched.
+In order to capture an accurate image, it's important that the line capture rate is synchronized with the speed of the object. If the camera is capturing too slowly, the image will look squished. If the camera is capturing too fast, the image will look stretched.
 
 {{< include "diagram-capture.html" >}}
 
-Industrial line scan cameras typically connect to an encoder to synchronize the line capture rate to the exact rate of the moving subject. WHen this isn't possible, the camera can run in "free run" mode where it captures lines at a fixed frequency.
+Industrial line scan cameras typically connect to an encoder to synchronize the line capture rate to the exact speed of the moving subject. When this isn't possible, the camera can run in "free run" mode where it captures lines at a fixed frequency.
 
 # Building a Portable, Handheld, Line Scan Camera
 
-After being inspired by Maygar's photography and Daniel Lu's posts about taking a line scan camera on-the-go, I decided I wanted my own portable line scan camera. Just line a modern digital camera, I wanted it to be
+After being inspired by Magyar's photography and Daniel Lu's posts about taking a line scan camera on the go, I decided I wanted my own portable line scan camera. Just like a modern digital camera, I wanted it to be
 
 - battery powered
 - small enough to be carried by hand
@@ -60,16 +60,16 @@ Since I already had a [Vision Datum MARS4096C-L28GC](https://www.visiondatum.com
 
 - a 4096x2 pixel[^2] sensor with a Bayer RGGB color filter array
 - Ethernet connectivity with [GenICam](https://en.wikipedia.org/wiki/GenICam) compatibility over the [GigE Vision](https://en.wikipedia.org/wiki/GigE_Vision) protocol
-- 12v-24v power input
+- 12v – 24v power input
 
-The camera unit has a sensor, onboard processing, and some buffer memory, but it's not a general purpose computer. It must connect to a host computer that processes and stores the image data. In an industrial application, it would connect to a machine vision computer. To act as the host device, I chose the [Seeed Studio ReTerminal](https://www.seeedstudio.com/ReTerminal-with-CM4-p-4904.html), which is a Raspberry Pi CM4 packaged with a 5" touch screen. I got the version with 4GB RAM, however in hindsight, I should have used the 8gb RAM version.
+The camera unit has a sensor, onboard processing, and some buffer memory, but it's not a general-purpose computer. It must connect to a host computer that processes and stores the image data. In an industrial application, it would connect to a machine vision computer. To act as the host device, I chose the [Seeed Studio ReTerminal](https://www.seeedstudio.com/ReTerminal-with-CM4-p-4904.html), which is a Raspberry Pi CM4 packaged with a 5" touch screen. I got the version with 4 GB of RAM; however, in hindsight, I should have used the 8 GB version.
 
-To power the unit, I found a [holder for a Milwaukee M18 power tool battery](https://www.americannigels3dprinting.com). The injection molded version is great quality and I would use these for other projects again in the future. Two switching converters provide 12v for the camera and 5v for the Raspberry Pi. These cheap Chinese switching converters work fine, but make an annoying audible whine under load.
+To power the unit, I found a [holder for a Milwaukee M18 power tool battery](https://www.americannigels3dprinting.com). The injection-molded version is great quality, and I would use these for other projects again in the future. Two cheap Aliexpress LM2596 switching voltage converters provide 12v for the camera and 5v for the Raspberry Pi. These converters work fine but make an annoying audible whine under load.
 
 For interconnection:
 
 - For connecting the camera to the Raspberry Pi, I found a right-angle Ethernet patch cable. I had to cut the cable to length and re-terminate it.
-- For the power connection to the camera, I trimmed the cable provided by the camera's vendor. The camera's IO/power port is a Hirose push-pull connector which proves to be very bulky. I tried to use a field-wireable connector but it was too long to reasonably package within the enclosure.
+- For the power connection to the camera, I trimmed the cable provided by the camera's vendor. The camera's IO/power port is a Hirose push-pull connector, which proved to be very bulky. I tried to use a field-wireable connector, but it was too long to reasonably package within the enclosure.
 
 <div style="display: flex; gap: 1em; justify-content: center; flex-wrap: wrap;">
   <figure class="image" style="flex: 1.588; min-width: 0;">
@@ -84,13 +84,13 @@ For interconnection:
 
 ### Lens
 
-One of the hardest aspects of the hardware was fitting a photography lens onto the industrial camera body. The body has an M42 threaded mount with a 12mm flange focal depth, so a need to adapt this to accept modern photography lenses. The M42 mount is reasonably common on vintage cameras and lenses (especially Pentax), however most off-the-shelf adapters are for putting M42 lenses on modern bodies, not the other way around.
+One of the hardest aspects of the hardware was fitting a photography lens onto the industrial camera body. The body has an M42 threaded mount with a 12mm flange focal depth, so I needed to adapt this to accept modern photography lenses. The M42 mount is reasonably common on vintage cameras and lenses (especially Pentax); however, most off-the-shelf adapters are for putting M42 lenses on modern bodies, not the other way around.
 
-My primary camera is a Sony A6600, so using Sony E mount lenses would have been ideal since I already have a lot of lens options. However, E mount lenses need to receive power and control signals from the camera for drive-by-wire focus and aperture control. I looked for an adapter to provide external power and control to an E mount lens, but found nothing so this path was a non-starter.
+My primary camera is a Sony A6600, so using Sony E-mount lenses would have been ideal since I already have a lot of lens options. However, E-mount lenses need to receive power and control signals from the camera for drive-by-wire focus and aperture control. I looked for an adapter to provide external power and control to an E-mount lens, but found nothing, so this path was a non-starter.
 
-The next best option was adapting to Nikon F lenses, since I have a few manual lenses laying around in 50mm and 35mm focal lengths. There's no off-the-shelf F-to-M42 adapter, but I found a M39-to-M42 adapter, and paired that with an F-to-M39 adapter.
+The next best option was adapting to Nikon F lenses, since I have a few manual lenses lying around in 50mm and 35mm focal lengths. There's no off-the-shelf F-to-M42 adapter, but I found an M39-to-M42 adapter and paired that with an F-to-M39 adapter.
 
-Additionally, adapting the lens mount is not enough; the flange focal depth must be considered. A lens will produce an image at a specific point, and this point must align with the sensor or film of the camera. Otherwise, the image will appear out-of-focus. If the lens produces an image behind the sensor of the camera, an extension tube can be added to move the sensor to the point where the image will be clear. If the lens produces an image in front of the sensor, there is no practical way to use that lens with that camera. Fortunately, the 12mm flange depth of the industrial camera is very short, so it is possible to add a tube to be compatible with the 46.5mm flange depth required by F mount lenses.
+Additionally, adapting the lens mount is not enough; the flange focal depth must also be considered. A lens will produce an image at a specific distance, and this distance must align with the sensor or film of the camera. Otherwise, the image will appear out of focus. If the lens produces an image behind the sensor, an extension tube can be added to move the sensor to the point where the image will be sharp. If the lens produces an image in front of the sensor, there is no practical way to use that lens with that camera. Fortunately, the 12mm flange depth of the industrial camera is very short, so it is possible to add a tube to be compatible with the 46.5mm flange depth required by F-mount lenses.
 
 {{< include "diagram-focal-flange-depth.html" >}}
 
@@ -108,9 +108,9 @@ For operating the camera, I wanted a lightweight touchscreen GUI to allow as muc
 
 {{< figure src="camera-back.jpg" caption="The setup interface with information to help set the exposure time, gain (ISO), white balance, and focus." class="image" style="max-width: 600px;" >}}
 
-The camera uses the GigE Vision protocol, which is a UDP-based protocol for transferring camera data. On top of GigE Vision, the camera follows the GenICam API standard [^3]. There are open source libraries that implement these protocols, but it was easier to get started with the vendors proprietary C SDK, which they provide for Linux on arm64.
+The camera uses the GigE Vision protocol, which is a UDP-based protocol for transferring camera data. On top of GigE Vision, the camera follows the GenICam API standard[^3]. There are open-source libraries that implement these protocols, but it was easier to get started with the vendor's proprietary C SDK, which they provide for Linux on arm64.
 
-Since there's no way to connect the camera to an encoder, the camera is in "free run" mode. The ideal capture rate depends on the linear speed of the subject, the distance from the subject, and the focal length of the lens. Any image distortion caused by a mismatch between the speed and capture rate must be corrected by post processing. In practice, it's best to "over capture" by setting the frequency higher than ideal and then "squishing" the image.
+Since there's no way to connect the camera to an encoder, the camera runs in "free run" mode. The ideal capture rate depends on the linear speed of the subject, the distance from the subject, and the focal length of the lens. Any image distortion caused by a mismatch between the speed and capture rate must be corrected in postprocessing. In practice, it's best to "over-capture" by setting the frequency higher than ideal and then "squishing" the image.
 
 To facilitate continuous capture, the camera is set with a frame size of 64 lines. Each time a frame is ready, the SDK runs a callback function and the frame is copied into a ring buffer. A separate thread reads out of the ring buffer and appends the data to a buffer on disk. It's important that minimal processing be done during a capture to minimize the delay when processing each frame. If the frames can't be processed quickly, they could be dropped.
 
@@ -125,9 +125,9 @@ Digital cameras capture color images by putting a "color filter array" in front 
   <figcaption>The Bayer pattern over an image sensor.</figcaption>
 </figure>
 
-The color filter array limits each pixel on the sensor to only detect one color, either red, blue, or green. This means each pixel of the raw captured image only contains one color channel. However, on an LCD screen, each pixel has all three colors. To develop the image, for each pixel, the two missing channels must be interpolated from the neighboring pixels.
+The color filter array limits each pixel on the sensor to detecting only one color: red, blue, or green. This means each pixel of the raw captured image contains only one color channel. However, on an LCD screen, each pixel has all three colors. To develop the image, the two missing channels for each pixel must be interpolated from the neighboring pixels.
 
-The vendor SDK provides a function to demosaic the image data, however it provides limited options and ultimately results in poor control of the final output. To allow more ergonomic editing and color correction I implemented a converter to save the camera raw files as Adobe DNG files that can be opened by Adobe Lightroom, Affinity Photo, and other photo editing software. The DNG file format is public and well documented, however Lightroom is very finicky in what it will accept. There are many "optional" fields in the file format that Lightroom seems to require, and it does not give clear error messages about what it doesn't like about a given file.
+The vendor SDK provides a function to demosaic the image data; however, it offers limited options and ultimately results in poor control of the final output. To allow more ergonomic editing and color correction, I implemented a converter to save the camera raw files as Adobe DNG files that can be opened by Adobe Lightroom, Affinity Photo, and other photo editing software. The DNG file format is public and well documented; however, Lightroom is very finicky about what it will accept. There are many "optional" fields in the file format that Lightroom seems to require, and it does not give clear error messages about what it doesn't like about a given file.
 
 <figure class="image">
   {{< processed-img src="lightroom-error.png" style="max-width: 600px" alt="A supremely unhelpful error from Lightroom" >}}
@@ -155,6 +155,6 @@ Getting the file to open is only part of the battle, however. If the raw sensor 
 
 [^1]: Document scanners and copiers use a similar principle. A flatbed scanner has a single line of sensors that moves across the page, building up the image one row at a time.
 
-[^2]: Why is is the sensor 2px wide, instead of 1px wide? Because Bayer filter arrays are a 2x2 repeating pattern, color line scan cameras typically have two rows. Monochrome line scan cameras are actually 1px.
+[^2]: Why is the sensor 2px wide, instead of 1px wide? Because Bayer filter arrays are a 2x2 repeating pattern, color line scan cameras typically have two rows. Monochrome line scan cameras are actually 1px.
 
-[^3]: GenICam is transport agnostic, and supports other transports common in industrial vision applications such as USB3, CameraLink, CoaXPress, etc
+[^3]: GenICam is transport-agnostic and supports other transports common in industrial vision applications, such as USB3, CameraLink, CoaXPress, etc.
