@@ -45,7 +45,7 @@ In order to capture an accurate image, it's important that the line capture rate
 
 Industrial line scan cameras typically connect to an encoder to synchronize the line capture rate to the exact speed of the moving subject. When this isn't possible, the camera can run in "free run" mode where it captures lines at a fixed frequency.
 
-# Building a Portable, Handheld, Line Scan Camera
+# Packaging a Line Scan Camera as a Handheld Device
 
 After being inspired by Magyar's photography and Daniel Lu's posts about taking a line scan camera on the go, I decided I wanted my own portable line scan camera. Just like a modern digital camera, I wanted it to be
 
