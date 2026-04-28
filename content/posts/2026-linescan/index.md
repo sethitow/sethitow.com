@@ -84,7 +84,7 @@ For interconnection:
 
 ### Lens
 
-One of the hardest aspects of the hardware was fitting a photography lens onto the industrial camera body. The body has an M42 threaded mount with a 12mm flange focal depth, so a need to adapt this to accept modern photography lenses. The M42 mount is reasonably common vintage lens (especially Pentax), however most off-the-shelf adapters are for putting M42 lenses on modern bodies, not the other way around.
+One of the hardest aspects of the hardware was fitting a photography lens onto the industrial camera body. The body has an M42 threaded mount with a 12mm flange focal depth, so a need to adapt this to accept modern photography lenses. The M42 mount is reasonably common on vintage cameras and lenses (especially Pentax), however most off-the-shelf adapters are for putting M42 lenses on modern bodies, not the other way around.
 
 My primary camera is a Sony A6600, so using E mount lenses would have been ideal since I already have a lot of lens options. However, E mount lenses need power for drive-by-wire focus and use digital aperture control so this was a non-starter. I looked for an adapter to provide external power and control to an E mount lens, but found nothing.
 
