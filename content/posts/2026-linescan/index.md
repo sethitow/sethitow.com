@@ -12,14 +12,14 @@ categories:
 
 <figure class="image">
   <div style="display: flex; flex-direction: column; gap: 4px;">
-    <div style="width: 100%; aspect-ratio: 15333 / 2000; overflow: hidden;">
-      {{< processed-img src="caltrain_lightroom_edit.jpg" style="width: 300%; height: 100%; object-fit: cover; object-position: left;" alt="Caltrain left section" link="true" >}}
+    <div style="width: 100%; aspect-ratio: 15438 / 2750; overflow: hidden;">
+      {{< processed-img src="caltrain_lightroom_edit.jpg" style="width: 100%; height: 100%; object-fit: cover; object-position: left;" alt="Caltrain left section" link="true" >}}
     </div>
-    <div style="width: 100%; aspect-ratio: 15333 / 2000; overflow: hidden;">
-      {{< processed-img src="caltrain_lightroom_edit.jpg" style="width: 300%; height: 100%; object-fit: cover; object-position: center;" alt="Caltrain center section" link="true" >}}
+    <div style="width: 100%; aspect-ratio: 15438 / 2750; overflow: hidden;">
+      {{< processed-img src="caltrain_lightroom_edit.jpg" style="width: 100%; height: 100%; object-fit: cover; object-position: center;" alt="Caltrain center section" link="true" >}}
     </div>
-    <div style="width: 100%; aspect-ratio: 15333 / 2000; overflow: hidden;">
-      {{< processed-img src="caltrain_lightroom_edit.jpg" style="width: 300%; height: 100%; object-fit: cover; object-position: right;" alt="Caltrain right section" link="true" >}}
+    <div style="width: 100%; aspect-ratio: 15438 / 2750; overflow: hidden;">
+      {{< processed-img src="caltrain_lightroom_edit.jpg" style="width: 100%; height: 100%; object-fit: cover; object-position: right;" alt="Caltrain right section" link="true" >}}
     </div>
   </div>
   <figcaption>Caltrain</figcaption>
