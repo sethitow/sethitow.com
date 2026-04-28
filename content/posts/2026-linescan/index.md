@@ -86,15 +86,21 @@ For interconnection:
 
 One of the hardest aspects of the hardware was fitting a photography lens onto the industrial camera body. The body has an M42 threaded mount with a 12mm flange focal depth, so a need to adapt this to accept modern photography lenses. The M42 mount is reasonably common on vintage cameras and lenses (especially Pentax), however most off-the-shelf adapters are for putting M42 lenses on modern bodies, not the other way around.
 
-My primary camera is a Sony A6600, so using E mount lenses would have been ideal since I already have a lot of lens options. However, E mount lenses need power for drive-by-wire focus and use digital aperture control so this was a non-starter. I looked for an adapter to provide external power and control to an E mount lens, but found nothing.
+My primary camera is a Sony A6600, so using Sony E mount lenses would have been ideal since I already have a lot of lens options. However, E mount lenses need to receive power and control signals from the camera for drive-by-wire focus and aperture control. I looked for an adapter to provide external power and control to an E mount lens, but found nothing so this path was a non-starter.
 
-The next best option was adapting to Nikon F lenses, since I have a few manual lenses laying around in 50mm and 35mm focal lengths, so this was the next best option. There's no off-the-shelf M42-to-F adapter, but I found a M39 to M42 adapter, and paired that with an F to M39 adapter.
+The next best option was adapting to Nikon F lenses, since I have a few manual lenses laying around in 50mm and 35mm focal lengths. There's no off-the-shelf F-to-M42 adapter, but I found a M39-to-M42 adapter, and paired that with an F-to-M39 adapter.
 
 Additionally, adapting the lens mount is not enough; the flange focal depth must be considered. A lens will produce an image at a specific point, and this point must align with the sensor or film of the camera. Otherwise, the image will appear out-of-focus. If the lens produces an image behind the sensor of the camera, an extension tube can be added to move the sensor to the point where the image will be clear. If the lens produces an image in front of the sensor, there is no practical way to use that lens with that camera. Fortunately, the 12mm flange depth of the industrial camera is very short, so it is possible to add a tube to be compatible with the 46.5mm flange depth required by F mount lenses.
 
 {{< include "diagram-focal-flange-depth.html" >}}
 
-After much searching and a few phone calls, I found a combination of lens adapters and extension tubes that made the F lenses work.
+After much searching and a few phone calls, I found a combination of lens adapters and extension tubes that made the F lenses work. The final stack-up is:
+
+1. Lens
+2. Extension Tube
+3. Nikon F to M39
+4. M39 to M42
+5. Camera Body
 
 ## Software
 
