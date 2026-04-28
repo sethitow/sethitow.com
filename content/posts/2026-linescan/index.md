@@ -112,14 +112,14 @@ To facilitate continuous capture, the camera is set with a frame size of 64 line
 
 After the image is captured, it is stored as "raw" image data, which isn't directly viewable. This raw data must be "developed" into a viewable image.
 
-Digital cameras capture color images by putting a "color filter array" in front of the sensor.
+Digital cameras capture color images by putting a "color filter array" in front of the sensor. The most common color filter array is the Bayer pattern, which is a 2x2 grid with one red, one blue, and two green pixels. There are more green pixels because the human eye is more sensitive to green light.
 
 <figure class="image">
   {{< processed-img src="bayer-pattern.png" style="max-width: 400px" alt="The Bayer pattern over an image sensor" >}}
   <figcaption>The Bayer pattern over an image sensor.</figcaption>
 </figure>
 
-The color filter array limits each pixel on the sensor to only detect one color, either red, blue, or green. This means each "pixel" of the raw captured image only contains one color channel. However, on an LCD screen, each pixel has all three colors. To make each pixel have all three color channels, the two missing channels must be interpolated from the neighboring pixels.
+The color filter array limits each pixel on the sensor to only detect one color, either red, blue, or green. This means each pixel of the raw captured image only contains one color channel. However, on an LCD screen, each pixel has all three colors. To develop the image, for each pixel, the two missing channels must be interpolated from the neighboring pixels.
 
 The vendor SDK provides a function to demosaic the image data, however it provides limited options and ultimately results in poor control of the final output. To allow more ergonomic editing and color correction I implemented a converter to save the camera raw files as Adobe DNG files that can be opened by Adobe Lightroom, Affinity Photo, and other photo editing software. The DNG file format is public and well documented, however Lightroom is very finicky in what it will accept. There are many "optional" fields in the file format that Lightroom seems to require, and it does not give clear error messages about what it doesn't like about a given file.
 
