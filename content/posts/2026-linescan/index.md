@@ -27,9 +27,9 @@ categories:
 
 # Introduction
 
-Most digital cameras are area scan cameras. They use a sensor with a two-dimensional grid of light-sensitive points to capture an image. Area scan cameras excel at capturing stationary subjects; however, they can only capture moving subjects if the exposure time is fast enough that the image doesn't have motion blur.
+Most digital cameras are area scan cameras. They use a sensor with a two-dimensional grid of light-sensitive points to capture an image. Area scan cameras excel at capturing stationary subjects; however, they can only capture moving subjects if the exposure time is fast enough to avoid motion blur.
 
-There is another type of camera that is only common in industrial machine vision called a line scan camera. It uses a one-dimensional line of light-sensitive points which only capture one "line" of an image. To capture a full image, the subject must move relative to the camera so that it can be "scanned".
+There is another type of camera that is only common in industrial machine vision called a line scan camera. It uses a one-dimensional line of light-sensitive points that captures only one "line" of an image. To capture a full image, the subject must move relative to the camera so that it can be "scanned".
 
 {{< include "diagram-linescan-areascan.html" >}}
 
@@ -49,7 +49,7 @@ Industrial line scan cameras typically connect to an encoder to synchronize the 
 
 # Packaging a Line Scan Camera as a Handheld Device
 
-After being inspired by Magyar's photography and Daniel Lu's posts about taking a line scan camera on the go, I decided I wanted my own portable line scan camera. Just like a modern digital camera, I wanted it to be
+Inspired by Magyar's photography and Daniel Lu's posts about taking a line scan camera on the go, I decided I wanted my own portable line scan camera. Just like a modern digital camera, I wanted it to be
 
 - battery powered
 - small enough to be carried by hand
@@ -64,9 +64,9 @@ Since I already had a [Vision Datum MARS4096C-L28GC](https://www.visiondatum.com
 - Ethernet connectivity with [GenICam](https://en.wikipedia.org/wiki/GenICam) compatibility over the [GigE Vision](https://en.wikipedia.org/wiki/GigE_Vision) protocol
 - 12v – 24v power input
 
-The camera unit has a sensor, onboard processing, and some buffer memory, but it's not a general-purpose computer. It must connect to a host computer that processes and stores the image data. In an industrial application, it would connect to a machine vision computer. To act as the host device, I chose the [Seeed Studio ReTerminal](https://www.seeedstudio.com/ReTerminal-with-CM4-p-4904.html), which is a Raspberry Pi CM4 packaged with a 5" touch screen. I got the version with 4 GB of RAM; however, in hindsight, I should have used the 8 GB version.
+The camera unit has a sensor, onboard processing, and some buffer memory, but it's not a general-purpose computer. It must connect to a host computer that processes and stores the image data. In an industrial application, it would connect to a machine vision computer. To act as the host device, I chose the [Seeed Studio reTerminal](https://www.seeedstudio.com/ReTerminal-with-CM4-p-4904.html), which is a Raspberry Pi CM4 packaged with a 5" touch screen. I got the version with 4 GB of RAM; however, in hindsight, I should have used the 8 GB version.
 
-To power the unit, I found a [holder for a Milwaukee M18 power tool battery](https://www.americannigels3dprinting.com). The injection-molded version is great quality, and I would use these for other projects again in the future. Two cheap Aliexpress LM2596 switching voltage converters provide 12v for the camera and 5v for the Raspberry Pi. These converters work fine but make an annoying audible whine under load.
+To power the unit, I found a [holder for a Milwaukee M18 power tool battery](https://www.americannigels3dprinting.com). The injection-molded version is great quality, and I would use these again for other projects in the future. An XC5.0 size battery (nominally 5 amp-hours) has enough juice to run the camera for well over an hour. Two cheap AliExpress LM2596 switching voltage converters provide 12v for the camera and 5v for the Raspberry Pi. These converters work fine but make an annoying audible whine under load.
 
 For interconnection:
 
@@ -88,7 +88,7 @@ For interconnection:
 
 One of the hardest aspects of the hardware was fitting a photography lens onto the industrial camera body. The body has an M42 threaded mount with a 12mm flange focal depth, so I needed to adapt this to accept modern photography lenses. The M42 mount is reasonably common on vintage cameras and lenses (especially Pentax); however, most off-the-shelf adapters are for putting M42 lenses on modern bodies, not the other way around.
 
-My primary camera is a Sony A6600, so using Sony E-mount lenses would have been ideal since I already have a lot of lens options. However, E-mount lenses need to receive power and control signals from the camera for drive-by-wire focus and aperture control. I looked for an adapter to provide external power and control to an E-mount lens, but I found nothing so this path was a non-starter.
+My primary camera is a Sony A6600, so using Sony E-mount lenses would have been ideal since I already have a collection of lens options. However, E-mount lenses need to receive power and control signals from the camera for drive-by-wire focus and aperture control. I looked for an adapter to provide external power and control to an E-mount lens, but I found nothing, so this path was a non-starter.
 
 The next best option was adapting to Nikon F lenses, since I have a few manual lenses lying around in 50mm and 35mm focal lengths. There's no off-the-shelf F-to-M42 adapter, but I found an M39-to-M42 adapter and paired that with an F-to-M39 adapter.
 
@@ -106,7 +106,7 @@ After much searching and a few phone calls, I found a combination of lens adapte
 
 ## Software
 
-For operating the camera, I wanted a lightweight touchscreen GUI to allow as much of the Raspberry Pi's compute resources to be used for capturing the image. Qt 5 with QtQuick components was chosen because I was already familiar with Qt. Qt 5 was used because it's available on Raspbian 11 (Bullseye). I would have liked to use a custom Linux build with Buildroot, but the Seeed ReTerminal has a lot of peripheral drivers that are pre-installed in Seeed's modified Raspbian distribution. If I had rolled my own, I would have had to get those working on my own. If I had to do this again, I'd try Rust and [Slint](https://slint.dev), instead of C++ and Qt.
+For operating the camera, I wanted a lightweight touchscreen GUI to reserve as much of the Raspberry Pi's compute resources for capturing the image. Qt 5 with QtQuick components was chosen because I was already familiar with Qt. Qt 5 was used because it's available on Raspbian 11 (Bullseye). I would have preferred to create a custom Linux build with Buildroot, but the Seeed reTerminal has a lot of peripheral drivers that are pre-installed in Seeed's modified Raspbian distribution. If I had rolled my own, I would have had to get those working on my own. If I had to do this again, I'd try Rust and [Slint](https://slint.dev), instead of C++ and Qt.
 
 {{< figure src="camera-back.jpg" caption="The setup interface with visualizations to help set the exposure time, gain (ISO), white balance, and focus." class="image" maxHeight=300 >}}
 
@@ -126,13 +126,13 @@ Digital cameras capture color images by putting a "color filter array" in front 
 
 The color filter array limits each pixel on the sensor to detecting only one color: red, blue, or green. This means each pixel of the raw captured image contains only one color channel. However, on an LCD screen, each pixel has all three colors. To develop the image, the two missing channels for each pixel must be interpolated from the neighboring pixels.
 
-The vendor SDK provides a function to demosaic the image data; however, it offers limited options and ultimately results in poor control of the final output. To allow more ergonomic editing and color correction, I implemented a converter to save the camera raw files as Adobe DNG files that can be opened by Adobe Lightroom, Affinity Photo, and other photo editing software. The DNG file format is public and well documented; however, Lightroom is very finicky about what it will accept. There are many "optional" fields in the file format that Lightroom seems to require, and it does not give clear error messages about what it doesn't like about a given file.
+The vendor SDK provides a function to demosaic the image data; however, it offers limited options which results in poor control of the final output. To allow more ergonomic editing and color correction, I implemented a converter to save the camera raw files as Adobe DNG files that can be opened by Adobe Lightroom, Affinity Photo, and other photo editing software. The DNG file format is public and well documented; however, Lightroom is very finicky about what it will accept. There are many "optional" fields in the file format that Lightroom seems to require, and it does not give clear error messages about what it doesn't like about a given file.
 
 {{< figure src="lightroom-error.png" alt="A supremely unhelpful error from Lightroom" caption="A supremely unhelpful error from Lightroom after trying to import a valid DNG file." class="image" maxHeight=300 >}}
 
 It took some trial and error to figure out what Lightroom wants, but I was able to get _most_ files to open. There are still some captures that refuse to open properly, though.
 
-Getting the file to open is only part of the battle, however. If the raw sensor values are developed by Lightroom without any correction, the color hue is both "too green" and "too red" at the same time. Fortunately, the camera has internal color correction parameters that can be read as GenICam feature nodes and written into the DNG file. These parameters help raw developing software do initial color correction. The camera also has an "auto white balance" mode that produces red, green, and blue scalar values which can be written into the DNG. However, even with this correction, the colors don't always look right. It's taken some manual correction to get the color close to what I perceive as "natural".
+Getting the file to open is only part of the battle, however. If the raw sensor values are developed by Lightroom without any correction, the color hue is somehow simultaneously "too green" and "too red". Fortunately, the camera has internal color correction parameters that can be read as GenICam feature nodes and written into the DNG file. These parameters help raw developing software do initial color correction. The camera also has an "auto white balance" mode that produces red, green, and blue scalar values which can be written into the DNG. However, even with this correction, the colors don't always look right. It's taken some manual correction to get the color close to what I perceive as "natural".
 
 <div style="display: flex; gap: 1em; justify-content: center; flex-wrap: wrap;">
   <figure class="image" style="flex: 1; min-width: 0;">
@@ -148,6 +148,16 @@ Getting the file to open is only part of the battle, however. If the raw sensor 
     <figcaption>The image developed in Lightroom after manually adjusting the exposure and colors.</figcaption>
   </figure>
 </div>
+
+# Conclusion
+
+Overall, I'm happy with the usability of the device. There's room for improvement, but it is at a state where I can use it as a tool, rather than a tinkering project. I'm looking forward to finding more subjects to capture in the line scan format.
+
+Using the drill battery as a power source has worked well; they're robust, easy to swap out, and available off-the-shelf. The Seeed reTerminal has been a great platform for building the application on, with a touch screen that's easy to read in sunlight and physical buttons for important functions. While there are hardware improvements that could be made, I don't think they would make a meaningful difference in the usage of the device and I plan to focus on the software.
+
+The color accuracy still needs work. It's difficult to recreate the color science that we take for granted in our phones and digital cameras. I think a practical goal is to use Lightroom presets to get photos close, and then manually apply color corrections based on reference photos from another camera. There is also a software issue where the camera occasionally drops a frame, resulting in a 64-pixel-wide stripe missing from the image. A close inspection of the Caltrain photo will reveal a few of these defects. I think some adjustments of the Linux kernel networking settings can help with this.
+
+Line scan images possess a unique "look" as they bridge the worlds of industrial machine vision and artistic photography. The strong subject isolation and flat lighting create a sterility that's not seen in everyday photographs. Because the camera only captures what is moving and stationary objects are invisible, it offers a different perspective of the world. As Adam Magyar put it: the camera doesn't capture space; it captures changes in time. I want to find out what else can be seen in the world through this lens.
 
 [^1]: Document scanners and copiers use a similar principle. A flatbed scanner has a single line of sensors that moves across the page, building up the image one row at a time.
 
