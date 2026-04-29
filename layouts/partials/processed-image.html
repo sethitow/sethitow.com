@@ -6,6 +6,8 @@
 {{- $maxWidth := .maxWidth | default 2000 -}}
 {{- $maxHeight := .maxHeight | default 0 -}}
 {{- if eq $img.MediaType.MainType "image" -}}
+{{- $origWidth := $img.Width -}}
+{{- $origHeight := $img.Height -}}
 {{- $width := $img.Width -}}
 {{- $height := $img.Height -}}
 {{- if gt $width $maxWidth -}}
@@ -16,19 +18,33 @@
 {{- $width = (int (math.Round (mul (div (float $maxHeight) (float $height)) (float $width)))) -}}
 {{- $height = $maxHeight -}}
 {{- end -}}
-{{- $jpg := "" -}}
-{{- $webp := "" -}}
-{{- if eq $img.MediaType "image/webp" -}}
-{{- $jpg = $img.Resize (printf "%vx%v jpg" $width $height) -}}
-{{- $webp = $img.Resize (printf "%vx%v webp" $width $height) -}}
-{{- else if eq $img.MediaType "image/jpeg" -}}
-{{- $webp = $img.Resize (printf "%vx%v webp" $width $height) -}}
-{{- $jpg = $img.Resize (printf "%vx%v jpg" $width $height) -}}
-{{- else -}}
-{{- $jpg = $img.Resize (printf "%vx%v jpg" $width $height) -}}
-{{- $webp = $img.Resize (printf "%vx%v webp" $width $height) -}}
+{{- $width2x := (mul $width 2) -}}
+{{- $height2x := (mul $height 2) -}}
+{{- if gt $width2x $origWidth -}}
+{{- $width2x = $origWidth -}}
+{{- $height2x = $origHeight -}}
 {{- end -}}
-<picture><source srcset="{{ $webp.RelPermalink }}" type="image/webp"><source srcset="{{ $jpg.RelPermalink }}" type="image/jpeg"><img src="{{ $webp.RelPermalink }}"{{ with $alt }} alt="{{ . }}"{{ end }}{{ with $class }} class="{{ . }}"{{ end }}{{ with $style }} style="{{ . }}"{{ end }} width="{{ $jpg.Width }}" height="{{ $jpg.Height }}" loading="{{ $loading }}" /></picture>
+{{- $jpg1x := "" -}}
+{{- $webp1x := "" -}}
+{{- $jpg2x := "" -}}
+{{- $webp2x := "" -}}
+{{- if eq $img.MediaType "image/webp" -}}
+{{- $jpg1x = $img.Resize (printf "%vx%v jpg" $width $height) -}}
+{{- $webp1x = $img.Resize (printf "%vx%v webp" $width $height) -}}
+{{- $jpg2x = $img.Resize (printf "%vx%v jpg" $width2x $height2x) -}}
+{{- $webp2x = $img.Resize (printf "%vx%v webp" $width2x $height2x) -}}
+{{- else if eq $img.MediaType "image/jpeg" -}}
+{{- $webp1x = $img.Resize (printf "%vx%v webp" $width $height) -}}
+{{- $jpg1x = $img.Resize (printf "%vx%v jpg" $width $height) -}}
+{{- $webp2x = $img.Resize (printf "%vx%v webp" $width2x $height2x) -}}
+{{- $jpg2x = $img.Resize (printf "%vx%v jpg" $width2x $height2x) -}}
+{{- else -}}
+{{- $jpg1x = $img.Resize (printf "%vx%v jpg" $width $height) -}}
+{{- $webp1x = $img.Resize (printf "%vx%v webp" $width $height) -}}
+{{- $jpg2x = $img.Resize (printf "%vx%v jpg" $width2x $height2x) -}}
+{{- $webp2x = $img.Resize (printf "%vx%v webp" $width2x $height2x) -}}
+{{- end -}}
+<picture><source srcset="{{ $webp1x.RelPermalink }} 1x, {{ $webp2x.RelPermalink }} 2x" type="image/webp"><source srcset="{{ $jpg1x.RelPermalink }} 1x, {{ $jpg2x.RelPermalink }} 2x" type="image/jpeg"><img src="{{ $webp1x.RelPermalink }}"{{ with $alt }} alt="{{ . }}"{{ end }}{{ with $class }} class="{{ . }}"{{ end }}{{ with $style }} style="{{ . }}"{{ end }} width="{{ $jpg1x.Width }}" height="{{ $jpg1x.Height }}" loading="{{ $loading }}" /></picture>
 {{- else -}}
 <img src="{{ $img.RelPermalink }}"{{ with $alt }} alt="{{ . }}"{{ end }}{{ with $class }} class="{{ . }}"{{ end }}{{ with $style }} style="{{ . }}"{{ end }} loading="{{ $loading }}" />
 {{- end -}}
