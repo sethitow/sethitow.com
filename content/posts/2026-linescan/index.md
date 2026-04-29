@@ -29,15 +29,17 @@ categories:
 
 Most digital cameras are area scan cameras. They use a sensor with a two-dimensional grid of light-sensitive points to capture an image. Area scan cameras excel at capturing stationary subjects; however, they can only capture moving subjects if the exposure time is fast enough that the image doesn't have motion blur.
 
-There is another type of camera that is only common in industrial applications called a line scan camera. It uses a one-dimensional line of light-sensitive points which only capture one "line" of an image. To capture a full image, the subject must move relative to the camera so that it can be "scanned".
+There is another type of camera that is only common in industrial machine vision called a line scan camera. It uses a one-dimensional line of light-sensitive points which only capture one "line" of an image. To capture a full image, the subject must move relative to the camera so that it can be "scanned".
 
 {{< include "diagram-linescan-areascan.html" >}}
 
-For certain industrial applications, line scan cameras have several advantages over area scan cameras. They can capture at very high line rates, often tens of thousands of lines per second, allowing continuous imaging of fast-moving subjects. Because only a single line needs to be illuminated, the lighting can be made very consistent and uniform across the entire image. This is much easier to achieve than uniformly lighting a large two-dimensional area. Line scan cameras are well suited for inspecting objects moving on a conveyor belt, such as packages or food products, or continuous webs of material like rolls of paper, sheet metal, or textiles.
+For certain industrial applications, line scan cameras have several advantages over area scan cameras. They can capture at very high line rates, often tens of thousands of lines per second, allowing continuous imaging of fast-moving subjects. Because only a single line needs to be illuminated, the lighting can be made very consistent and uniform across the entire image. This is much easier to achieve than uniformly lighting a large two-dimensional area. Line scan cameras are well suited for inspecting objects moving on a conveyor belt, such as packages or food products. They are also common for imaging continuous webs of material like rolls of paper, sheet metal, or textiles.
 
-Because capturing a clear image requires the subject to move at a constant speed relative to the camera, line scan cameras are rarely used outside of these industrial settings. One notable exception are photo finish cameras used in track-and-field and horse racing. These cameras are line scan cameras oriented perpendicular to the finish line. As runners cross the line, the camera builds up an image that precisely captures the order of finish.
+Because capturing a clear image requires the subject to move at a constant speed relative to the camera, line scan cameras are rarely used outside of these industrial settings. One notable exception are photo finish cameras used in track-and-field and horse racing. These cameras are line scan cameras oriented perpendicular to the finish line. As subjects cross the line, the camera builds up an image that precisely captures the order of finish.
 
-Line scan cameras have also been used for artistic photography, most notably by photographer [Adam Magyar](https://www.adammagyar.com/). Magyar home-built a line-scan camera using the sensor from a document scanner[^1], and used it to create panoramas of subway platforms and city streets. [Daniel Lawrence Lu](https://daniel.lawrence.lu) has also blogged about using an industrial line scan camera to capture images of trains; his blog posts inspired me to take up this project.
+{{< figure src="alge-timing-horse-race.jpg" caption="A capture from a photo finish camera ([source](https://alge-timing.com/en/product/2287/photo-finish-camera-optic3))" class="image" maxHeight=300 >}}
+
+Line scan cameras have also been used for artistic photography, most notably by photographer [Adam Magyar](https://www.adammagyar.com/). Magyar home-built a line-scan camera using the sensor from a document scanner[^1] and used it to create panoramas of subway platforms and city streets. [Daniel Lawrence Lu](https://daniel.lawrence.lu) has also blogged about using an industrial line scan camera to capture images of trains; his blog posts inspired me to take up this project.
 
 In order to capture an accurate image, it's important that the line capture rate is synchronized with the speed of the object. If the camera is capturing too slowly, the image will look squished. If the camera is capturing too fast, the image will look stretched.
 
@@ -86,33 +88,33 @@ For interconnection:
 
 One of the hardest aspects of the hardware was fitting a photography lens onto the industrial camera body. The body has an M42 threaded mount with a 12mm flange focal depth, so I needed to adapt this to accept modern photography lenses. The M42 mount is reasonably common on vintage cameras and lenses (especially Pentax); however, most off-the-shelf adapters are for putting M42 lenses on modern bodies, not the other way around.
 
-My primary camera is a Sony A6600, so using Sony E-mount lenses would have been ideal since I already have a lot of lens options. However, E-mount lenses need to receive power and control signals from the camera for drive-by-wire focus and aperture control. I looked for an adapter to provide external power and control to an E-mount lens, but found nothing, so this path was a non-starter.
+My primary camera is a Sony A6600, so using Sony E-mount lenses would have been ideal since I already have a lot of lens options. However, E-mount lenses need to receive power and control signals from the camera for drive-by-wire focus and aperture control. I looked for an adapter to provide external power and control to an E-mount lens, but I found nothing so this path was a non-starter.
 
 The next best option was adapting to Nikon F lenses, since I have a few manual lenses lying around in 50mm and 35mm focal lengths. There's no off-the-shelf F-to-M42 adapter, but I found an M39-to-M42 adapter and paired that with an F-to-M39 adapter.
 
-Additionally, adapting the lens mount is not enough; the flange focal depth must also be considered. A lens will produce an image at a specific distance, and this distance must align with the sensor or film of the camera. Otherwise, the image will appear out of focus. If the lens produces an image behind the sensor, an extension tube can be added to move the sensor to the point where the image will be sharp. If the lens produces an image in front of the sensor, there is no practical way to use that lens with that camera. Fortunately, the 12mm flange depth of the industrial camera is very short, so it is possible to add a tube to be compatible with the 46.5mm flange depth required by F-mount lenses.
+Additionally, adapting the lens mount is not enough; the flange focal depth must also be considered. A lens will produce an image at a specific distance, and this distance must align with the sensor of the camera. Otherwise, the image will appear out of focus. If the lens produces an image behind the sensor, an extension tube can be added to move the sensor to the point where the image will be sharp. If the lens produces an image in front of the sensor, there is no practical way to use that lens with that camera. Fortunately, the 12mm flange depth of the industrial camera is very short, so it is possible to add a tube to be compatible with the 46.5mm flange depth required by F-mount lenses.
 
 {{< include "diagram-focal-flange-depth.html" >}}
 
-After much searching and a few phone calls, I found a combination of lens adapters and extension tubes that made the F lenses work. The final stack-up is:
+After much searching and a few phone calls, I found a combination of lens adapters and extension tubes that made the F-mount lenses work. The final stack-up is:
 
 1. Lens
 2. Extension Tube
-3. Nikon F to M39
+3. Nikon F-mount to M39
 4. M39 to M42
 5. Camera Body
 
 ## Software
 
-For operating the camera, I wanted a lightweight touchscreen GUI to allow as much of the Raspberry Pi's resources to be used for actually capturing the image. Qt 5 with QtQuick components was chosen because I was already familiar with Qt. Qt 5 was used because it's available on Raspbian 11 (Bullseye). If I had to do this again, I'd try Rust and [Slint](https://slint.dev). I would have liked to use a custom Linux build with Buildroot, but the Seeed ReTerminal has a lot of peripheral drivers that are pre-installed in Seeed's modified Raspbian distribution. If I had rolled my own, I would have had to get those working on my own.
+For operating the camera, I wanted a lightweight touchscreen GUI to allow as much of the Raspberry Pi's compute resources to be used for capturing the image. Qt 5 with QtQuick components was chosen because I was already familiar with Qt. Qt 5 was used because it's available on Raspbian 11 (Bullseye). I would have liked to use a custom Linux build with Buildroot, but the Seeed ReTerminal has a lot of peripheral drivers that are pre-installed in Seeed's modified Raspbian distribution. If I had rolled my own, I would have had to get those working on my own. If I had to do this again, I'd try Rust and [Slint](https://slint.dev), instead of C++ and Qt.
 
-{{< figure src="camera-back.jpg" caption="The setup interface with information to help set the exposure time, gain (ISO), white balance, and focus." class="image" maxHeight=300 >}}
+{{< figure src="camera-back.jpg" caption="The setup interface with visualizations to help set the exposure time, gain (ISO), white balance, and focus." class="image" maxHeight=300 >}}
 
-The camera uses the GigE Vision protocol, which is a UDP-based protocol for transferring camera data. On top of GigE Vision, the camera follows the GenICam API standard[^3]. There are open-source libraries that implement these protocols, but it was easier to get started with the vendor's proprietary C SDK, which they provide for Linux on arm64.
+The camera uses the GigE Vision protocol, which is a UDP-based protocol for transferring image and control data. On top of GigE Vision, the camera follows the GenICam API standard[^3]. There are open-source libraries that implement these protocols, but it was easier to get started with the vendor's proprietary C SDK, which they provide for Linux on arm64.
 
 Since there's no way to connect the camera to an encoder, the camera runs in "free run" mode. The ideal capture rate depends on the linear speed of the subject, the distance from the subject, and the focal length of the lens. Any image distortion caused by a mismatch between the speed and capture rate must be corrected in postprocessing. In practice, it's best to "over-capture" by setting the frequency higher than ideal and then "squishing" the image.
 
-To facilitate continuous capture, the camera is set with a frame size of 64 lines. Each time a frame is ready, the SDK runs a callback function and the frame is copied into a ring buffer. A separate thread reads out of the ring buffer and appends the data to a buffer on disk. It's important that minimal processing be done during a capture to minimize the delay when processing each frame. If the frames can't be processed quickly, they could be dropped.
+To facilitate continuous capture, the camera is set with a frame size of 64 lines. Each time a frame is ready, the SDK runs a callback function and the frame is copied into a ring buffer. A separate thread reads out of the ring buffer and appends the data to a file on disk. It's important that minimal processing be done during a capture to minimize the delay when processing each frame. If the frames can't be processed quickly, they could be dropped.
 
 ### Postprocessing
 
