@@ -106,7 +106,7 @@ After much searching and a few phone calls, I found a combination of lens adapte
 
 For operating the camera, I wanted a lightweight touchscreen GUI to allow as much of the Raspberry Pi's resources to be used for actually capturing the image. Qt 5 with QtQuick components was chosen because I was already familiar with Qt. Qt 5 was used because it's available on Raspbian 11 (Bullseye). If I had to do this again, I'd try Rust and [Slint](https://slint.dev). I would have liked to use a custom Linux build with Buildroot, but the Seeed ReTerminal has a lot of peripheral drivers that are pre-installed in Seeed's modified Raspbian distribution. If I had rolled my own, I would have had to get those working on my own.
 
-{{< figure src="camera-back.jpg" caption="The setup interface with information to help set the exposure time, gain (ISO), white balance, and focus." class="image" >}}
+{{< figure src="camera-back.jpg" caption="The setup interface with information to help set the exposure time, gain (ISO), white balance, and focus." class="image" maxHeight=300 >}}
 
 The camera uses the GigE Vision protocol, which is a UDP-based protocol for transferring camera data. On top of GigE Vision, the camera follows the GenICam API standard[^3]. There are open-source libraries that implement these protocols, but it was easier to get started with the vendor's proprietary C SDK, which they provide for Linux on arm64.
 
@@ -120,13 +120,13 @@ After the image is captured, it is stored as "raw" image data, which isn't direc
 
 Digital cameras capture color images by putting a "color filter array" in front of the sensor. The most common color filter array is the Bayer pattern, which is a 2x2 grid with one red, one blue, and two green pixels. There are more green pixels because the human eye is more sensitive to green light.
 
-{{< figure src="bayer-pattern.png" alt="The Bayer pattern over an image sensor" caption="The Bayer pattern over an image sensor." class="image" >}}
+{{< figure src="bayer-pattern.png" alt="The Bayer pattern over an image sensor" caption="The Bayer pattern over an image sensor." class="image" maxHeight=300  >}}
 
 The color filter array limits each pixel on the sensor to detecting only one color: red, blue, or green. This means each pixel of the raw captured image contains only one color channel. However, on an LCD screen, each pixel has all three colors. To develop the image, the two missing channels for each pixel must be interpolated from the neighboring pixels.
 
 The vendor SDK provides a function to demosaic the image data; however, it offers limited options and ultimately results in poor control of the final output. To allow more ergonomic editing and color correction, I implemented a converter to save the camera raw files as Adobe DNG files that can be opened by Adobe Lightroom, Affinity Photo, and other photo editing software. The DNG file format is public and well documented; however, Lightroom is very finicky about what it will accept. There are many "optional" fields in the file format that Lightroom seems to require, and it does not give clear error messages about what it doesn't like about a given file.
 
-{{< figure src="lightroom-error.png" alt="A supremely unhelpful error from Lightroom" caption="A supremely unhelpful error from Lightroom after trying to import a valid DNG file." class="image" >}}
+{{< figure src="lightroom-error.png" alt="A supremely unhelpful error from Lightroom" caption="A supremely unhelpful error from Lightroom after trying to import a valid DNG file." class="image" maxHeight=300 >}}
 
 It took some trial and error to figure out what Lightroom wants, but I was able to get _most_ files to open. There are still some captures that refuse to open properly, though.
 
