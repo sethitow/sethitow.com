@@ -126,7 +126,7 @@ Digital cameras capture color images by putting a "color filter array" in front 
 
 The color filter array limits each pixel on the sensor to detecting only one color: red, blue, or green. This means each pixel of the raw captured image contains only one color channel. However, on an LCD screen, each pixel has all three colors. To develop the image, the two missing channels for each pixel must be interpolated from the neighboring pixels.
 
-The vendor SDK provides a function to demosaic the image data; however, it offers limited options which results in poor control of the final output. To allow more ergonomic editing and color correction, I implemented a converter to save the camera raw files as Adobe DNG files that can be opened by Adobe Lightroom, Affinity Photo, and other photo editing software. The DNG file format is public and well documented; however, Lightroom is very finicky about what it will accept. There are many "optional" fields in the file format that Lightroom seems to require, and it does not give clear error messages about what it doesn't like about a given file.
+The vendor SDK provides a function to demosaic the image data; however, it offers limited options which results in poor control of the final output. To allow more ergonomic editing and color correction, I implemented a converter to save the camera raw files as Adobe DNG files[^4] that can be opened by Adobe Lightroom, Affinity Photo, and other photo editing software. The DNG file format is public and well documented; however, Lightroom is very finicky about what it will accept. There are many "optional" fields in the file format that Lightroom seems to require, and it does not give clear error messages about what it doesn't like about a given file.
 
 {{< figure src="lightroom-error.png" alt="A supremely unhelpful error from Lightroom" caption="A supremely unhelpful error from Lightroom after trying to import a valid DNG file." class="image" maxHeight=300 >}}
 
@@ -164,3 +164,5 @@ Line scan images possess a unique "look" as they bridge the worlds of industrial
 [^2]: Why is the sensor 2px wide, instead of 1px wide? Because Bayer filter arrays are a 2x2 repeating pattern, color line scan cameras typically have two rows. Monochrome line scan cameras are actually 1px.
 
 [^3]: GenICam is transport-agnostic and supports other transports common in industrial vision applications, such as USB3, CameraLink, CoaXPress, etc.
+
+[^4]: Adobe developed and promotes the Digital Negative (DNG) file format as an open source raw image format with publicly available spec. It was intended to replace the proprietary file formats used by major camera manufacturers, however it received limited adoption. Major camera manufacturers like Sony, Canon, and Fuji still use their own proprietary formats and they work with Adobe to add support to Lightroom. Outside of being a major camera manufacturer, the easiest way to get raw images to open in Lightroom is to use DNG.
